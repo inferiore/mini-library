@@ -68,11 +68,18 @@ specific book or browse by category/author without scrolling the entire list.
 ## API/Application Changes
 
 - `App\Services\BookSearchService::search(?string $query, ?string $category = null,
-  ?string $publisher = null): LengthAwarePaginator` — branches on
-  `DB::connection()->getDriverName()`: Postgres path builds a `tsquery` (via
-  `websearch_to_tsquery` for forgiving user input parsing) and orders by
-  `ts_rank`; SQLite path falls back to `LIKE` across the same columns, unranked
-  (or ranked by a simple "does title match" boost, not full relevance).
+  ?string $publisher = null): LengthAwarePaginator` — built entirely on Eloquent
+  (`Book::query()`), not the plain `DB` facade, so results are real `Book` models
+  (casts, soft-delete scoping, accessors all apply) ready to hand straight to the
+  Inertia response/paginator. `DB::connection()->getDriverName()` is used only to pick
+  which raw SQL fragment to inject via `whereRaw()`/`orderByRaw()`, not to switch query
+  builders: Postgres path — `whereRaw('search_vector @@ websearch_to_tsquery(?)',
+  [$query])` + `orderByRaw('ts_rank(search_vector, websearch_to_tsquery(?)) desc',
+  [$query])`; SQLite path — `where(fn ($q) => $q->where('title', 'like', "%{$query}%")
+  ->orWhere('author', 'like', ...)->orWhere(...))`, unranked (or a simple "title match
+  first" boost, not full relevance). Category/publisher filters are plain
+  `->when($category, fn ($q) => $q->where('category', $category))` on the same
+  Eloquent builder, composing normally with either branch above.
 - `BookController@index` (from spec 003) is extended to accept `query`, `category`,
   `publisher` query-string params and delegate to `BookSearchService` when any are
   present, otherwise the plain listing.
