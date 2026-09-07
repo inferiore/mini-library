@@ -33,6 +33,11 @@ browse and view book details, so that I can decide what to borrow.
    the embedding job) — this spec only needs to fire that hook; the RAG machinery
    itself is spec 007's responsibility. If spec 007 isn't implemented yet when 003
    ships, this hook is a no-op guarded by a feature check, not a hard dependency.
+7. A `BookFactory` and `BookSeeder` populate a realistic demo catalog (varied
+   categories, authors, publishers, publication years, and a mix of fully-available,
+   partially-checked-out, and fully-unavailable books) — this is what makes search
+   (006), recommendations (008), and checkout (005) demonstrable out of the box instead
+   of requiring manual data entry before the app is usable.
 
 ## Non-Functional Requirements
 
@@ -81,6 +86,18 @@ browse and view book details, so that I can decide what to borrow.
   as a guarded call, not a hard dependency that breaks 003 if run standalone.
 - `BookController` (resource controller): `index`, `show`, `create`, `store`, `edit`,
   `update`, `destroy` — thin, delegates to `BookService`.
+- `database/factories/BookFactory.php` — Faker-backed, varied categories (fiction,
+  non-fiction, sci-fi, technical, biography, etc.), realistic ISBN-13 format,
+  `total_copies` between 1–10, `available_copies` defaulting to `total_copies` (states
+  for "partially checked out" and "fully unavailable" via factory states, e.g.
+  `->partiallyBorrowed()`, `->fullyBorrowed()`, used by the seeder to produce a mixed
+  catalog).
+- `database/seeders/BookSeeder.php` — creates ~30–50 books spanning categories, a mix
+  of availability states (per the factory states above), called from
+  `DatabaseSeeder`. Never runs in `phpunit.ci.xml`/`phpunit.xml` test environments
+  (tests build their own fixtures via the factory directly, not the seeder) and is
+  safe to re-run (idempotent — e.g. skip if `books` already has rows, mirroring this
+  project's existing user-seeder convention of being safe to re-run).
 
 ## UI Changes
 
@@ -138,6 +155,9 @@ browse and view book details, so that I can decide what to borrow.
 - Deleting a book with an active loan is blocked; deleting one with none succeeds
   (soft-delete).
 - Book list and detail pages are visible to all authenticated roles.
+- `php artisan db:seed` populates a realistic, varied demo catalog (multiple
+  categories, a mix of available/partially-borrowed/fully-borrowed books) without
+  erroring on a re-run.
 
 ## Test Cases
 
@@ -152,6 +172,8 @@ browse and view book details, so that I can decide what to borrow.
 6. Feature test: book index/show pages return 200 for MEMBER, LIBRARIAN, and ADMIN.
 7. Unit test: `BookObserver` marks the RAG document stale / dispatches the embedding
    job only when an embedding-relevant field actually changed (not on every save).
+8. Seeder test: running `BookSeeder` populates books across multiple categories with a
+   mix of availability states, and running it twice doesn't error or duplicate rows.
 
 ## Definition of Done
 
