@@ -1,6 +1,6 @@
 # 005 — Checkout / Check-in
 
-Status: draft
+Status: approved
 Area: backend+frontend
 Depends on: 001-project-foundation, 002-authentication, 003-book-management,
 004-inventory

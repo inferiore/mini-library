@@ -1,6 +1,6 @@
 # 008 — AI Recommendations
 
-Status: draft
+Status: approved
 Area: backend+frontend
 Depends on: 001-project-foundation, 003-book-management, 007-rag
 

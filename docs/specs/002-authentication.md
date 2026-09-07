@@ -1,6 +1,6 @@
 # 002 — Authentication
 
-Status: draft
+Status: approved
 Area: backend+frontend
 Depends on: 001-project-foundation
 
@@ -37,6 +37,30 @@ elevated roles.
    new `SocialiteController`-style route + one config block naming the provider's
    client ID/secret env vars — no change to the `User` model, `role` assignment logic,
    or session handling.
+7. **Demo login (MVP-only convenience)**: a `UserSeeder` creates three fixed demo
+   accounts, one per role (`admin@library.test` / `librarian@library.test` /
+   `member@library.test`, all password `password`). When demo login is enabled (see
+   Non-Functional Requirements), the `/login` page shows a "Demo accounts" panel with
+   one button per seeded user — clicking a button logs in as that user immediately, no
+   typing required, so a reviewer/interviewer can explore every role without knowing or
+   entering credentials.
+
+## Demo Login — Non-Functional Requirements (safety gate)
+
+- Demo login is gated by a dedicated `DEMO_LOGIN_ENABLED` env flag (`config('auth.demo_login_enabled')`),
+  **not** simply `app()->environment('local')` — an explicit flag is harder to leave
+  accidentally on than an environment-name check, and it's easy to confirm at a glance
+  in `.env`/`.env.example`. Defaults to `true` locally, and `DEPLOYMENT.md` (spec 010)
+  must call out that it should be `false` (or the route simply unregistered) for any
+  deployment meant to be shown to real, untrusted users.
+- The demo-login endpoint never accepts a password — it looks up the seeded user by a
+  fixed, allow-listed identifier (e.g. `role` name, not a raw email/id from the client)
+  and logs in directly via `Auth::login()`. It must reject any request when
+  `DEMO_LOGIN_ENABLED` is false, returning 404 (not just hiding the button) so the
+  route genuinely isn't usable, not just unlinked.
+- This is explicitly an MVP/demo affordance, not a real "impersonation" feature — it
+  does not require an already-authenticated admin, and must never ship enabled by
+  default in a spec 010 production deployment.
 
 ## Non-Functional Requirements
 
@@ -80,6 +104,14 @@ elevated roles.
   middleware and the guest/auth redirect behavior.
 - Inertia shared data (`HandleInertiaRequests::share()`): `auth.user` including `id`,
   `name`, `email`, `role`.
+- `database/seeders/UserSeeder.php`: creates the 3 fixed demo accounts (idempotent —
+  `firstOrCreate` by email, safe to re-run), called from `DatabaseSeeder`.
+- `App\Http\Controllers\DemoLoginController@store` (`POST /demo-login/{role}`, `role`
+  constrained to `admin|librarian|member` via route enum/regex): 404s immediately if
+  `!config('auth.demo_login_enabled')`; otherwise looks up the matching seeded demo
+  user by role and calls `Auth::login($user)`.
+- `config/auth.php` (or a new `config/demo.php`): `demo_login_enabled` from
+  `env('DEMO_LOGIN_ENABLED', true)`.
 
 ## UI Changes
 
@@ -88,6 +120,10 @@ elevated roles.
   field errors surfaced from Laravel validation.
 - A minimal authenticated shell/layout (nav with user name + role badge + logout)
   reused by all authenticated pages built in later specs.
+- `login.tsx` conditionally renders a "Demo accounts" panel (three buttons: "Continue
+  as Admin/Librarian/Member") when the page receives `demoLoginEnabled: true` as an
+  Inertia prop (server-controlled, not a client-side env check) — each button posts to
+  `/demo-login/{role}` and follows the redirect.
 
 ## Authorization
 
@@ -130,6 +166,10 @@ elevated roles.
   and takes effect on their next request (role is read fresh, not cached in the
   session).
 - No client-supplied `role` field can influence the role assigned at registration.
+- Clicking each of the three demo-login buttons logs in as that seeded role
+  immediately, with no password entry.
+- With `DEMO_LOGIN_ENABLED=false`, the demo panel doesn't render and the
+  `/demo-login/{role}` route itself 404s even if hit directly.
 
 ## Test Cases
 
@@ -145,6 +185,10 @@ elevated roles.
    invalid email or invalid role string.
 8. Feature test: submitting `role=admin` in the registration payload is ignored — the
    created user is still `member`.
+9. Feature test: `POST /demo-login/admin` (and librarian/member) logs in as the correct
+   seeded user when `DEMO_LOGIN_ENABLED=true`.
+10. Feature test: `POST /demo-login/admin` returns 404 when `DEMO_LOGIN_ENABLED=false`.
+11. Feature test: `UserSeeder` run twice doesn't error or duplicate the demo accounts.
 
 ## Definition of Done
 

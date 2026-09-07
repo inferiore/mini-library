@@ -1,6 +1,6 @@
 # 004 — Inventory
 
-Status: draft
+Status: approved
 Area: backend
 Depends on: 001-project-foundation, 003-book-management
 

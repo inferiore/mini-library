@@ -1,6 +1,6 @@
 # 010 — Deployment
 
-Status: draft
+Status: approved
 Area: infra
 Depends on: 001-project-foundation (Docker Compose skeleton, CI shape)
 

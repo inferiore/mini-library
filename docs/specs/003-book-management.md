@@ -1,6 +1,6 @@
 # 003 — Book Management
 
-Status: draft
+Status: approved
 Area: backend+frontend
 Depends on: 001-project-foundation, 002-authentication
 

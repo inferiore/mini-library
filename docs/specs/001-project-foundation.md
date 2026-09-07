@@ -1,6 +1,6 @@
 # 001 — Project Foundation
 
-Status: draft
+Status: approved
 Area: infra+backend
 Depends on: none
 
