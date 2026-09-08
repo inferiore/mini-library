@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\LoanController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -23,4 +24,11 @@ Route::middleware('auth')->group(function () {
         ->name('books.inventory.update');
 
     Route::resource('books', BookController::class);
+
+    // Checkout / check-in (spec 005). Members see "My Loans"; staff see the
+    // system-wide "All Loans" view (authorized in the controller/policy).
+    Route::get('my-loans', [LoanController::class, 'myLoans'])->name('loans.mine');
+    Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+    Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+    Route::put('loans/{loan}', [LoanController::class, 'update'])->name('loans.update');
 });

@@ -1,12 +1,19 @@
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
-import type { Book } from '@/types';
+import type { Book, Loan } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 
-export default function BookShow({ book }: { book: Book }) {
+export default function BookShow({
+    book,
+    activeLoan,
+}: {
+    book: Book;
+    activeLoan: Loan | null;
+}) {
     const { auth, flash } = usePage().props;
     const canManage =
         auth.user?.role === 'admin' || auth.user?.role === 'librarian';
+    const isMember = auth.user?.role === 'member';
 
     const destroy = () => {
         if (confirm(`Delete "${book.title}"?`)) {
@@ -105,8 +112,63 @@ export default function BookShow({ book }: { book: Book }) {
                 </p>
             )}
 
+            {isMember && <LoanAction book={book} activeLoan={activeLoan} />}
+
             {canManage && <AdjustInventory book={book} />}
         </AuthenticatedLayout>
+    );
+}
+
+function LoanAction({
+    book,
+    activeLoan,
+}: {
+    book: Book;
+    activeLoan: Loan | null;
+}) {
+    const { processing: checkingOut, post } = useForm({ book_id: book.id });
+    const returnForm = useForm({});
+
+    const checkout: FormEventHandler = (e) => {
+        e.preventDefault();
+        post('/loans', { preserveScroll: true });
+    };
+
+    const returnBook = () => {
+        if (activeLoan) {
+            returnForm.put(`/loans/${activeLoan.id}`, { preserveScroll: true });
+        }
+    };
+
+    return (
+        <section className="mt-10">
+            {activeLoan ? (
+                <button
+                    onClick={returnBook}
+                    disabled={returnForm.processing}
+                    className="rounded-sm border border-[#1b1b18] px-4 py-2 text-sm font-medium hover:bg-black/5 disabled:opacity-50 dark:border-[#eeeeec] dark:hover:bg-white/5"
+                >
+                    Return
+                </button>
+            ) : book.available_copies > 0 ? (
+                <form onSubmit={checkout}>
+                    <button
+                        type="submit"
+                        disabled={checkingOut}
+                        className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                    >
+                        Check Out
+                    </button>
+                </form>
+            ) : (
+                <button
+                    disabled
+                    className="cursor-not-allowed rounded-sm border border-[#e3e3e0] px-4 py-2 text-sm text-[#706f6c] opacity-60 dark:border-[#3E3E3A] dark:text-[#A1A09A]"
+                >
+                    Unavailable
+                </button>
+            )}
+        </section>
     );
 }
 

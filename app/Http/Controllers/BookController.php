@@ -28,8 +28,16 @@ class BookController extends Controller
 
     public function show(Book $book): Response
     {
+        // The current user's active (unreturned) loan for this book, if any —
+        // drives the Check Out vs. Return action on the detail page (spec 005).
+        $activeLoan = $book->loans()
+            ->where('user_id', request()->user()->id)
+            ->whereNull('returned_at')
+            ->first();
+
         return Inertia::render('books/show', [
             'book' => $book,
+            'activeLoan' => $activeLoan,
         ]);
     }
 

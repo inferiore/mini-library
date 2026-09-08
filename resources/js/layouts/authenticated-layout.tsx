@@ -15,9 +15,35 @@ export default function AuthenticatedLayout({ children }: PropsWithChildren) {
         <div className="min-h-screen bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
             <nav className="border-b border-[#e3e3e0] dark:border-[#3E3E3A]">
                 <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                    <Link href="/dashboard" className="font-medium">
-                        Mini Library
-                    </Link>
+                    <div className="flex items-center gap-6">
+                        <Link href="/dashboard" className="font-medium">
+                            Mini Library
+                        </Link>
+                        {user && (
+                            <div className="flex items-center gap-4 text-sm">
+                                <Link href="/books" className="hover:underline">
+                                    Books
+                                </Link>
+                                {user.role === 'member' && (
+                                    <Link
+                                        href="/my-loans"
+                                        className="hover:underline"
+                                    >
+                                        My Loans
+                                    </Link>
+                                )}
+                                {(user.role === 'admin' ||
+                                    user.role === 'librarian') && (
+                                    <Link
+                                        href="/loans"
+                                        className="hover:underline"
+                                    >
+                                        All Loans
+                                    </Link>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {user && (
                         <div className="flex items-center gap-4 text-sm">
