@@ -81,7 +81,7 @@ deploying later is a documented decision, not a scramble.
    now implemented (a `deploy` job using SSH + `DEPLOY_PATH`/`DEPLOY_SSH_KEY`/
    `SSH_HOST`/`SSH_USER` secrets — see `DEPLOYMENT.md`'s "Automated Deployment (CD)"
    section). `DEPLOYMENT.md` still has a "Not Yet Implemented" section, but it now
-   lists the real remaining gaps in the *implemented* pipeline (no rollback-on-failure,
+   lists the real remaining gaps in the _implemented_ pipeline (no rollback-on-failure,
    no registry, no zero-downtime deploy, no DB backup-before-migrate, no host
    provisioning) rather than describing CD itself as unbuilt.
 
@@ -141,7 +141,7 @@ N/A.
 - ~~The "Not Yet Implemented" section clearly states automated CD is deferred and what
   it would require.~~ **Superseded 2026-09-08**: automated CD is now implemented (see
   the "Re-scoping note" above); `DEPLOYMENT.md`'s "Not Yet Implemented" section instead
-  honestly lists the real gaps remaining *within* that implemented pipeline (no
+  honestly lists the real gaps remaining _within_ that implemented pipeline (no
   rollback-on-failure, no registry, no zero-downtime deploy, no DB
   backup-before-migrate, no host provisioning, no DNS/TLS, no secret-rotation
   automation).

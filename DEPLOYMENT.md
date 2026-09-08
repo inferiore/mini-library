@@ -34,26 +34,26 @@ bakes a built `public/build` at image build time instead (see Dockerfile).
 
 ## Environment Variables
 
-Full list is `.env.example`; this section documents *purpose*, never real example
+Full list is `.env.example`; this section documents _purpose_, never real example
 values. See also `needed_variable.md` for which of these still need a real value
 supplied by you before a live deployment.
 
-| Variable | Purpose |
-|---|---|
-| `APP_NAME` | Display name used in emails, page titles. |
-| `APP_ENV` | `local` / `production` — affects Laravel's default error verbosity and a few framework behaviors. |
-| `APP_KEY` | Laravel's encryption key (session/cookie signing, encrypted columns). Generate a fresh one per environment via `php artisan key:generate` — never reuse the local dev key in production. |
-| `APP_DEBUG` | Must be `false` in production — `true` leaks stack traces/env values to end users on error pages. |
-| `APP_URL` | The app's public base URL. Used for generating absolute links (password reset emails, etc). |
-| `DB_CONNECTION` / `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | Postgres connection. `DB_HOST=postgres` (the Compose service name) in Docker; `DB_PASSWORD` must match `POSTGRES_PASSWORD` used by the `postgres` service in `docker-compose.yml`. |
-| `DEMO_LOGIN_ENABLED` | Enables a one-click demo login (spec 002). **Must be `false`** for any deployment shown to real, untrusted users. |
-| `SESSION_DRIVER` / `SESSION_LIFETIME` / `SESSION_ENCRYPT` / `SESSION_PATH` / `SESSION_DOMAIN` | Session storage/cookie config. `SESSION_DRIVER=database` by default — no Redis required. |
-| `QUEUE_CONNECTION` | `database` — the queue worker polls the `jobs` table. No external queue broker required. |
-| `CACHE_STORE` | `database` — no Redis/Memcached required. |
-| `MAIL_MAILER` / `MAIL_HOST` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM_ADDRESS` / `MAIL_FROM_NAME` | Outbound mail (password resets). `log` driver locally (writes to the log file instead of sending). Only needs real values if reset emails must actually deliver. |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION` / `AWS_BUCKET` | Only needed if cover-image uploads should live on S3 instead of local disk (`FILESYSTEM_DISK`). Not required for an MVP/demo. |
-| `LOAN_PERIOD_DAYS` | Business rule: how many days a checkout is due before it's overdue (spec 005). |
-| `LLM_PROVIDER` / `LLM_BASE_URL` / `LLM_API_KEY` / `CHAT_MODEL` / `EMBEDDING_MODEL` / `VECTOR_DIM` | AI provider config for RAG search and recommendations (spec 007/008), OpenAI-compatible endpoint. `VECTOR_DIM` is baked into a pgvector column width by migration — changing it later requires a new migration and a full re-embed. `LLM_API_KEY` is a real secret; never commit it. |
+| Variable                                                                                                               | Purpose                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `APP_NAME`                                                                                                             | Display name used in emails, page titles.                                                                                                                                                                                                                                            |
+| `APP_ENV`                                                                                                              | `local` / `production` — affects Laravel's default error verbosity and a few framework behaviors.                                                                                                                                                                                    |
+| `APP_KEY`                                                                                                              | Laravel's encryption key (session/cookie signing, encrypted columns). Generate a fresh one per environment via `php artisan key:generate` — never reuse the local dev key in production.                                                                                             |
+| `APP_DEBUG`                                                                                                            | Must be `false` in production — `true` leaks stack traces/env values to end users on error pages.                                                                                                                                                                                    |
+| `APP_URL`                                                                                                              | The app's public base URL. Used for generating absolute links (password reset emails, etc).                                                                                                                                                                                          |
+| `DB_CONNECTION` / `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD`                                | Postgres connection. `DB_HOST=postgres` (the Compose service name) in Docker; `DB_PASSWORD` must match `POSTGRES_PASSWORD` used by the `postgres` service in `docker-compose.yml`.                                                                                                   |
+| `DEMO_LOGIN_ENABLED`                                                                                                   | Enables a one-click demo login (spec 002). **Must be `false`** for any deployment shown to real, untrusted users.                                                                                                                                                                    |
+| `SESSION_DRIVER` / `SESSION_LIFETIME` / `SESSION_ENCRYPT` / `SESSION_PATH` / `SESSION_DOMAIN`                          | Session storage/cookie config. `SESSION_DRIVER=database` by default — no Redis required.                                                                                                                                                                                             |
+| `QUEUE_CONNECTION`                                                                                                     | `database` — the queue worker polls the `jobs` table. No external queue broker required.                                                                                                                                                                                             |
+| `CACHE_STORE`                                                                                                          | `database` — no Redis/Memcached required.                                                                                                                                                                                                                                            |
+| `MAIL_MAILER` / `MAIL_HOST` / `MAIL_PORT` / `MAIL_USERNAME` / `MAIL_PASSWORD` / `MAIL_FROM_ADDRESS` / `MAIL_FROM_NAME` | Outbound mail (password resets). `log` driver locally (writes to the log file instead of sending). Only needs real values if reset emails must actually deliver.                                                                                                                     |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION` / `AWS_BUCKET`                                    | Only needed if cover-image uploads should live on S3 instead of local disk (`FILESYSTEM_DISK`). Not required for an MVP/demo.                                                                                                                                                        |
+| `LOAN_PERIOD_DAYS`                                                                                                     | Business rule: how many days a checkout is due before it's overdue (spec 005).                                                                                                                                                                                                       |
+| `LLM_PROVIDER` / `LLM_BASE_URL` / `LLM_API_KEY` / `CHAT_MODEL` / `EMBEDDING_MODEL` / `VECTOR_DIM`                      | AI provider config for RAG search and recommendations (spec 007/008), OpenAI-compatible endpoint. `VECTOR_DIM` is baked into a pgvector column width by migration — changing it later requires a new migration and a full re-embed. `LLM_API_KEY` is a real secret; never commit it. |
 
 None of these are baked into the Docker image at build time — they're all read at
 container **start** by `docker-entrypoint.sh` (`config:cache`, then `migrate --force`
@@ -66,7 +66,7 @@ own top-of-file comment for why.
 1. `postgres` runs the `pgvector/pgvector:pg16` image (not plain `postgres`) — this is
    what makes the `vector` extension available at all. Nothing else is
    pgvector-specific about the setup; migrations run `CREATE EXTENSION IF NOT EXISTS
-   vector` themselves (see spec 007's migration).
+vector` themselves (see spec 007's migration).
 2. `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` (set on the `postgres` service
    in `docker-compose.yml`, sourced from `.env`) must match `DB_DATABASE` /
    `DB_USERNAME` / `DB_PASSWORD` used by `app`/`queue` to connect — the Compose file
@@ -89,17 +89,17 @@ own top-of-file comment for why.
   different command.
 - **Production** (`docker-compose.yml`'s base command, used whenever
   `docker-compose.prod.yml` is layered on top — see below): `php artisan queue:work
-  --tries=3`. Retries a failing job up to 3 times before it lands in the `failed_jobs`
+--tries=3`. Retries a failing job up to 3 times before it lands in the `failed_jobs`
   table.
 - **Local dev** (`docker-compose.override.yml` overrides this): `php artisan
-  queue:listen --tries=3` instead — reloads on job-class code changes, at the cost of
+queue:listen --tries=3` instead — reloads on job-class code changes, at the cost of
   being slower per-job than `queue:work`. This override never applies in production
   since `docker-compose.override.yml` is only auto-loaded, not explicitly layered onto
   the prod command.
 - To confirm the queue worker is actually processing jobs: `docker compose -f
-  docker-compose.yml -f docker-compose.prod.yml logs -f queue` and watch for job
+docker-compose.yml -f docker-compose.prod.yml logs -f queue` and watch for job
   `RUNNING`/`DONE` lines (e.g. `App\Jobs\GenerateBookEmbedding`), or `docker compose ps
-  queue` to confirm the container is `Up` at all (a crashed/exited queue container
+queue` to confirm the container is `Up` at all (a crashed/exited queue container
   means jobs silently queue up and never process — no error surfaces to the end user).
 - Failed jobs land in the `failed_jobs` table; there's no automated alerting on
   failures yet (not in scope for this spec — see "Not Yet Implemented" below).
@@ -115,8 +115,8 @@ rationale. In short:
   but no application source baked in (bind-mounted instead).
 - `build` — production-only intermediate stage. Has both PHP and Node because Laravel
   Wayfinder's Vite plugin shells out to `php artisan wayfinder:generate` during `npm
-  run build`. Produces `vendor/`, `public/build`, and cached route/view files.
-- `production` — the actual runtime image. Copies only `build`'s *outputs*, never
+run build`. Produces `vendor/`, `public/build`, and cached route/view files.
+- `production` — the actual runtime image. Copies only `build`'s _outputs_, never
   Node itself, and never `.env`/application secrets (see "Secret Verification" below).
 
 CI's `docker-build` job (`.github/workflows/tests.yml`) builds the `production` target
@@ -146,7 +146,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 What this does:
 
 - Layers `docker-compose.prod.yml` on top of the base `docker-compose.yml` —
-  `docker-compose.override.yml` is *not* picked up (it's only auto-loaded when no
+  `docker-compose.override.yml` is _not_ picked up (it's only auto-loaded when no
   `-f` flags are given), so this never accidentally runs the `dev` build target, bind
   mounts, or the `vite` service in production.
 - `docker-compose.prod.yml` adds `restart: unless-stopped` to every service — a host
@@ -170,26 +170,26 @@ deploy target now exists.
 The `deploy` job in `.github/workflows/tests.yml`:
 
 - Runs only on a real push to `main` (`if: github.event_name == 'push' && github.ref ==
-  'refs/heads/main'` — deliberately checks both, not just the ref, so it can never fire
+'refs/heads/main'` — deliberately checks both, not just the ref, so it can never fire
   on a pull-request run of the same workflow file).
 - Only runs after `static-analysis`, `frontend`, `backend-tests`, and `docker-build`
   all succeed (`needs:`) — a broken build or failing test suite blocks deploy the same
   way it would block a manual deploy decision.
 - Uses `appleboy/ssh-action` (pinned to a release commit SHA, `v1.2.5`) to SSH into the
   target host and run **exactly the manual runbook above**: `cd $DEPLOY_PATH && git
-  fetch/merge --ff-only && docker compose -f docker-compose.yml -f
-  docker-compose.prod.yml up -d --build`, then polls `GET /up` (via `docker compose
-  exec web wget ... http://localhost/up`, inside the container network — no dependency
+fetch/merge --ff-only && docker compose -f docker-compose.yml -f
+docker-compose.prod.yml up -d --build`, then polls `GET /up` (via `docker compose
+exec web wget ... http://localhost/up`, inside the container network — no dependency
   on knowing the host's external port) for up to ~30 seconds before failing the job.
 - Required GitHub Secrets (referenced only as `${{ secrets.NAME }}` in the workflow —
   no real values live in this repo):
-  - `SSH_HOST` — hostname/IP of the deploy target.
-  - `SSH_USER` — SSH username on the deploy target.
-  - `DEPLOY_SSH_KEY` — private key for SSH auth to the deploy target. The corresponding
-    public key must already be authorized on that host (`~/.ssh/authorized_keys` for
-    `SSH_USER`).
-  - `DEPLOY_PATH` — absolute path on the deploy target where this repo is checked out
-    (e.g. `/srv/mini-library`) and where its production `.env` already lives.
+    - `SSH_HOST` — hostname/IP of the deploy target.
+    - `SSH_USER` — SSH username on the deploy target.
+    - `DEPLOY_SSH_KEY` — private key for SSH auth to the deploy target. The corresponding
+      public key must already be authorized on that host (`~/.ssh/authorized_keys` for
+      `SSH_USER`).
+    - `DEPLOY_PATH` — absolute path on the deploy target where this repo is checked out
+      (e.g. `/srv/mini-library`) and where its production `.env` already lives.
 - Serialized via a `concurrency` group (`production-deploy`) so two merges landing in
   quick succession can't race each other's `git pull`/`docker compose up` on the same
   host directory.
@@ -209,6 +209,7 @@ first time is a manual, one-time setup step — not something this pipeline does
 ### What CD Does and Does Not Do
 
 **Does:**
+
 - Deploys on every push to `main`, after tests/build pass, with no manual SSH needed
   for routine deploys.
 - Fails the workflow clearly (non-zero exit, visible in the Actions UI/logs) if the
@@ -217,6 +218,7 @@ first time is a manual, one-time setup step — not something this pipeline does
 - Never handles or transmits a real secret value itself — `.env` stays host-resident.
 
 **Does not:**
+
 - **No automatic rollback.** A failed health check fails the job loudly, but the
   script does not revert the host to the previous commit/image on failure. Recovery is
   manual (see "Rollback" below).
@@ -227,7 +229,7 @@ first time is a manual, one-time setup step — not something this pipeline does
   container start (same as every other deploy/restart). A destructive migration would
   need to be caught in review, not by this pipeline.
 - **No image registry / pre-built artifact reuse.** Every deploy rebuilds the
-  production image from source *on the target host itself*. This also shapes rollback
+  production image from source _on the target host itself_. This also shapes rollback
   (see below) — there's no "just re-point at the previous tag," because there was never
   a separate, addressable previous tag to begin with.
 - **No host provisioning.** Docker/Docker Compose must already be installed on the
@@ -268,16 +270,16 @@ solved by this change.
   starter kit, no custom code). Returns HTTP 200 when the app has booted successfully.
   From the host: `curl -f http://localhost:${APP_PORT:-8000}/up` (against the `web`
   service's published port) or, without relying on the host's port mapping, `docker
-  compose -f docker-compose.yml -f docker-compose.prod.yml exec web wget -qO- 
-  http://localhost/up` (hits the container network directly — this is what the CD job
+compose -f docker-compose.yml -f docker-compose.prod.yml exec web wget -qO- 
+http://localhost/up` (hits the container network directly — this is what the CD job
   itself uses).
 - **Queue worker**: `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-  queue` should show `Up`. There's no HTTP endpoint for queue health — a crashed queue
+queue` should show `Up`. There's no HTTP endpoint for queue health — a crashed queue
   container doesn't surface as an app-facing error, it just means jobs silently stop
   processing, so checking `ps`/`logs` after any deploy is worth doing explicitly, not
   just assuming "app is up" implies "queue is up."
 - **Database**: `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-  postgres` should show `Up (healthy)` — the service's own `pg_isready` healthcheck
+postgres` should show `Up (healthy)` — the service's own `pg_isready` healthcheck
   gates `app`/`queue` startup, so if they came up at all, Postgres was reachable at
   that point.
 
@@ -286,7 +288,7 @@ solved by this change.
 The production image build copies `docker-entrypoint.sh` and application source, but
 never `.env` — `.dockerignore` explicitly excludes `.env`/`.env.*` (allowing only
 `.env.example`, which contains no real values), and nothing in the Dockerfile's
-`production` stage runs `config:cache` (that happens at container *start*, in
+`production` stage runs `config:cache` (that happens at container _start_, in
 `docker-entrypoint.sh`, using whatever `.env` is supplied via `env_file:` at that
 point — never at build time). Verified manually as part of this spec's implementation:
 
@@ -330,7 +332,7 @@ Criteria).
   job's own comment in `.github/workflows/tests.yml`).
 - **Deploy job's health check fails after a successful build**: the app built but
   didn't come up healthy — check `docker compose logs app web` on the host directly;
-  the CD job's failure alone won't tell you *why* `/up` didn't respond, only that it
+  the CD job's failure alone won't tell you _why_ `/up` didn't respond, only that it
   didn't.
 
 ## Not Yet Implemented

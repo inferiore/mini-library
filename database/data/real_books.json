@@ -1,182 +1,182 @@
 [
-  {
-    "title": "1984",
-    "author": "George Orwell",
-    "isbn": "9780582777316",
-    "description": "1984 by George Orwell.",
-    "published_year": 2003,
-    "category": "Dystopian Fiction",
-    "publisher": "Pearson Education"
-  },
-  {
-    "title": "Pride and Prejudice",
-    "author": "Jane Austen",
-    "isbn": "9798515415099",
-    "description": "IT IS A TRUTH universally acknowledge, that a single man in possession of a good fortune must be in want of a wife.",
-    "published_year": 1813,
-    "category": "Classic Fiction",
-    "publisher": "Norton & Company Limited, W. W."
-  },
-  {
-    "title": "Dune",
-    "author": "Frank Herbert",
-    "isbn": null,
-    "description": "Dune by Frank Herbert.",
-    "published_year": null,
-    "category": "Science Fiction",
-    "publisher": null
-  },
-  {
-    "title": "The Hobbit",
-    "author": "J.R.R. Tolkien",
-    "isbn": "9780547951966",
-    "description": "The Hobbit is a tale of high adventure, undertaken by a company of dwarves in search of dragon-guarded gold. A reluctant partner in this perilous quest is Bilbo Baggins, a comfort-loving unambitious hobbit, who surprises even himself by his resourcefulness and skill as a burglar. Encounters with trolls, goblins, dwarves, elves, and giant spiders, conversations with the dragon, Smaug, and a rather unwilling presence at the Battle of Five Armies are just some of the adventures that befall Bilbo. Bilbo Baggins has taken his place among the ranks of the immortals of children’s fiction. Written by Professor Tolkien for his children, The Hobbit met with instant critical acclaim when published. [**PDF**](https://chesserresources.com/doc/the-hobbit-by-j-r-r-tolkien/)",
-    "published_year": 1937,
-    "category": "Fantasy",
-    "publisher": "Houghton Mifflin, 1966"
-  },
-  {
-    "title": "Clean Code",
-    "author": "Robert C. Martin",
-    "isbn": "9780136083221",
-    "description": "You are reading this book for two reasons. First, you are a programmer. Second, you want to be a better programmer. Good. We need better programmers.",
-    "published_year": 2008,
-    "category": "Software Engineering",
-    "publisher": "Prentice Hall"
-  },
-  {
-    "title": "The Pragmatic Programmer",
-    "author": "David Thomas",
-    "isbn": "9788131722428",
-    "description": "What distinguishes Pragmatic Programmers?",
-    "published_year": 1999,
-    "category": "Software Engineering",
-    "publisher": "Addison-Wesley Professional"
-  },
-  {
-    "title": "Sapiens",
-    "author": "Yuval Noah Harari",
-    "isbn": "9788429779776",
-    "description": "From a renowned historian comes a groundbreaking narrative of humanity’s creation and evolution—a #1 international bestseller—that explores the ways in which biology and history have defined us and enhanced our understanding of what it means to be “human.” One hundred thousand years ago, at least six different species of humans inhabited Earth. Yet today there is only one—homo sapiens. What happened to the others? And what may happen to us? Most books about the history of humanity pursue either a historical or a biological approach, but Dr. Yuval Noah Harari breaks the mold with this highly original book that begins about 70,000 years ago with the appearance of modern cognition. From examining the role evolving humans have played in the global ecosystem to charting the rise of empires, Sapiens integrates history and science to reconsider accepted narratives, connect past developments with contemporary concerns, and examine specific events within the context of larger ideas. Dr. Harari also compels us to look ahead, because over the last few decades humans have begun to bend laws of natural selection that have governed life for the past four billion years. We are acquiring the ability to design not only the world around us, but also ourselves. Where is this leading us, and what do we want to become? Featuring 27 photographs, 6 maps, and 25 illustrations/diagrams, this provocative and insightful work is sure to spark debate and is essential reading for aficionados of Jared Diamond, James Gleick, Matt Ridley, Robert Wright, and Sharon Moalem.",
-    "published_year": 2011,
-    "category": "History",
-    "publisher": "seksok"
-  },
-  {
-    "title": "Educated",
-    "author": "Tara Westover",
-    "isbn": "9781443452472",
-    "description": "Educated by Tara Westover.",
-    "published_year": 2018,
-    "category": "Biography",
-    "publisher": "Random House US"
-  },
-  {
-    "title": "Atomic Habits",
-    "author": "James Clear",
-    "isbn": "9798998881152",
-    "description": "Atomic Habits by James Clear.",
-    "published_year": 2016,
-    "category": "Self-Help",
-    "publisher": "James Clear"
-  },
-  {
-    "title": "A Brief History of Time",
-    "author": "Stephen Hawking",
-    "isbn": "9786051067582",
-    "description": "Fᴜ̈ʀ ᴅɪᴇ ᴇʀsᴛᴇ Aᴜsɢᴀʙᴇ dieses Buches habe ich kein Vorwort geschrieben – das hat freundlicherweise damal Carl Sagan übernommen.",
-    "published_year": 1988,
-    "category": "Science",
-    "publisher": "Editions 84"
-  },
-  {
-    "title": "To Kill a Mockingbird",
-    "author": "Harper Lee",
-    "isbn": "9785040077656",
-    "description": "When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow.",
-    "published_year": 1960,
-    "category": "Classic Fiction",
-    "publisher": "FollettBound Platinum"
-  },
-  {
-    "title": "The Great Gatsby",
-    "author": "F. Scott Fitzgerald",
-    "isbn": "9781789432480",
-    "description": "In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.",
-    "published_year": 1920,
-    "category": "Classic Fiction",
-    "publisher": "Oda"
-  },
-  {
-    "title": "Gone Girl",
-    "author": "Gillian Flynn",
-    "isbn": "9782355841170",
-    "description": "Gone Girl is a 2012 crime thriller novel by American writer Gillian Flynn. It was published by Crown Publishing Group in June 2012. The novel became popular and made the New York Times Best Seller list. The sense of suspense in the novel comes from whether or not Nick Dunne is involved in the disappearance of his wife Amy. ---------- Also contained in: [Les apparences suvi de la novella Nous allons mourir ce soir](https://openlibrary.org/works/OL24801746W)",
-    "published_year": 2011,
-    "category": "Mystery",
-    "publisher": "G+JGruner+Jahr Polska"
-  },
-  {
-    "title": "The Da Vinci Code",
-    "author": "Dan Brown",
-    "isbn": null,
-    "description": "The Da Vinci Code by Dan Brown.",
-    "published_year": null,
-    "category": "Mystery",
-    "publisher": null
-  },
-  {
-    "title": "Brave New World",
-    "author": "Aldous Huxley",
-    "isbn": "9798365087255",
-    "description": "Originally published in 1932, this outstanding work of literature is more crucial and relevant today than ever before. Cloning, feel-good drugs, antiaging programs, and total social control through politics, programming, and media -- has Aldous Huxley accurately predicted our future? With a storyteller's genius, he weaves these ethical controversies in a compelling narrative that dawns in the year 632 AF (After Ford, the deity). When Lenina and Bernard visit a savage reservation, we experience how Utopia can destroy humanity. A powerful work of speculative fiction that has enthralled and terrified readers for generations, Brave New World is both a warning to be heeded and thought-provoking yet satisfying entertainment. - Container.",
-    "published_year": 1932,
-    "category": "Dystopian Fiction",
-    "publisher": "Neal-Schuman publishing. New York, Toronto, London"
-  },
-  {
-    "title": "The Catcher in the Rye",
-    "author": "J.D. Salinger",
-    "isbn": "9781613839560",
-    "description": "Se querem mesmo ouvir o que aconteceu, a primeira coisa que vão querer saber é onde eu nasci, como passei a porcaria da minha infância, o que meus pais faziam antes que eu nascesse, e toda essa lenga-lenga tipo David Copperfield, mas, para dizer a verdade, não estou com vontade de falar sobre isso.",
-    "published_year": 1945,
-    "category": "Classic Fiction",
-    "publisher": "Sudamericana"
-  },
-  {
-    "title": "Thinking, Fast and Slow",
-    "author": "Daniel Kahneman",
-    "isbn": "9780385676533",
-    "description": "Thinking, Fast and Slow by Daniel Kahneman.",
-    "published_year": 2011,
-    "category": "Psychology",
-    "publisher": "Worth Publishers, Incorporated"
-  },
-  {
-    "title": "The Design of Everyday Things",
-    "author": "Don Norman",
-    "isbn": null,
-    "description": "The Design of Everyday Things by Don Norman.",
-    "published_year": null,
-    "category": "Design",
-    "publisher": null
-  },
-  {
-    "title": "Meditations",
-    "author": "Marcus Aurelius",
-    "isbn": "9798633637694",
-    "description": "Meditations by Marcus Aurelius.",
-    "published_year": 2020,
-    "category": "Philosophy",
-    "publisher": "Independently Published"
-  },
-  {
-    "title": "Harry Potter and the Sorcerer's Stone",
-    "author": "J.K. Rowling",
-    "isbn": "9780439211161",
-    "description": "Harry Potter and the Sorcerer's Stone by J.K. Rowling.",
-    "published_year": 2000,
-    "category": "Fantasy",
-    "publisher": "Scholastic Professional Books"
-  }
+    {
+        "title": "1984",
+        "author": "George Orwell",
+        "isbn": "9780582777316",
+        "description": "1984 by George Orwell.",
+        "published_year": 2003,
+        "category": "Dystopian Fiction",
+        "publisher": "Pearson Education"
+    },
+    {
+        "title": "Pride and Prejudice",
+        "author": "Jane Austen",
+        "isbn": "9798515415099",
+        "description": "IT IS A TRUTH universally acknowledge, that a single man in possession of a good fortune must be in want of a wife.",
+        "published_year": 1813,
+        "category": "Classic Fiction",
+        "publisher": "Norton & Company Limited, W. W."
+    },
+    {
+        "title": "Dune",
+        "author": "Frank Herbert",
+        "isbn": null,
+        "description": "Dune by Frank Herbert.",
+        "published_year": null,
+        "category": "Science Fiction",
+        "publisher": null
+    },
+    {
+        "title": "The Hobbit",
+        "author": "J.R.R. Tolkien",
+        "isbn": "9780547951966",
+        "description": "The Hobbit is a tale of high adventure, undertaken by a company of dwarves in search of dragon-guarded gold. A reluctant partner in this perilous quest is Bilbo Baggins, a comfort-loving unambitious hobbit, who surprises even himself by his resourcefulness and skill as a burglar. Encounters with trolls, goblins, dwarves, elves, and giant spiders, conversations with the dragon, Smaug, and a rather unwilling presence at the Battle of Five Armies are just some of the adventures that befall Bilbo. Bilbo Baggins has taken his place among the ranks of the immortals of children’s fiction. Written by Professor Tolkien for his children, The Hobbit met with instant critical acclaim when published. [**PDF**](https://chesserresources.com/doc/the-hobbit-by-j-r-r-tolkien/)",
+        "published_year": 1937,
+        "category": "Fantasy",
+        "publisher": "Houghton Mifflin, 1966"
+    },
+    {
+        "title": "Clean Code",
+        "author": "Robert C. Martin",
+        "isbn": "9780136083221",
+        "description": "You are reading this book for two reasons. First, you are a programmer. Second, you want to be a better programmer. Good. We need better programmers.",
+        "published_year": 2008,
+        "category": "Software Engineering",
+        "publisher": "Prentice Hall"
+    },
+    {
+        "title": "The Pragmatic Programmer",
+        "author": "David Thomas",
+        "isbn": "9788131722428",
+        "description": "What distinguishes Pragmatic Programmers?",
+        "published_year": 1999,
+        "category": "Software Engineering",
+        "publisher": "Addison-Wesley Professional"
+    },
+    {
+        "title": "Sapiens",
+        "author": "Yuval Noah Harari",
+        "isbn": "9788429779776",
+        "description": "From a renowned historian comes a groundbreaking narrative of humanity’s creation and evolution—a #1 international bestseller—that explores the ways in which biology and history have defined us and enhanced our understanding of what it means to be “human.” One hundred thousand years ago, at least six different species of humans inhabited Earth. Yet today there is only one—homo sapiens. What happened to the others? And what may happen to us? Most books about the history of humanity pursue either a historical or a biological approach, but Dr. Yuval Noah Harari breaks the mold with this highly original book that begins about 70,000 years ago with the appearance of modern cognition. From examining the role evolving humans have played in the global ecosystem to charting the rise of empires, Sapiens integrates history and science to reconsider accepted narratives, connect past developments with contemporary concerns, and examine specific events within the context of larger ideas. Dr. Harari also compels us to look ahead, because over the last few decades humans have begun to bend laws of natural selection that have governed life for the past four billion years. We are acquiring the ability to design not only the world around us, but also ourselves. Where is this leading us, and what do we want to become? Featuring 27 photographs, 6 maps, and 25 illustrations/diagrams, this provocative and insightful work is sure to spark debate and is essential reading for aficionados of Jared Diamond, James Gleick, Matt Ridley, Robert Wright, and Sharon Moalem.",
+        "published_year": 2011,
+        "category": "History",
+        "publisher": "seksok"
+    },
+    {
+        "title": "Educated",
+        "author": "Tara Westover",
+        "isbn": "9781443452472",
+        "description": "Educated by Tara Westover.",
+        "published_year": 2018,
+        "category": "Biography",
+        "publisher": "Random House US"
+    },
+    {
+        "title": "Atomic Habits",
+        "author": "James Clear",
+        "isbn": "9798998881152",
+        "description": "Atomic Habits by James Clear.",
+        "published_year": 2016,
+        "category": "Self-Help",
+        "publisher": "James Clear"
+    },
+    {
+        "title": "A Brief History of Time",
+        "author": "Stephen Hawking",
+        "isbn": "9786051067582",
+        "description": "Fᴜ̈ʀ ᴅɪᴇ ᴇʀsᴛᴇ Aᴜsɢᴀʙᴇ dieses Buches habe ich kein Vorwort geschrieben – das hat freundlicherweise damal Carl Sagan übernommen.",
+        "published_year": 1988,
+        "category": "Science",
+        "publisher": "Editions 84"
+    },
+    {
+        "title": "To Kill a Mockingbird",
+        "author": "Harper Lee",
+        "isbn": "9785040077656",
+        "description": "When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow.",
+        "published_year": 1960,
+        "category": "Classic Fiction",
+        "publisher": "FollettBound Platinum"
+    },
+    {
+        "title": "The Great Gatsby",
+        "author": "F. Scott Fitzgerald",
+        "isbn": "9781789432480",
+        "description": "In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.",
+        "published_year": 1920,
+        "category": "Classic Fiction",
+        "publisher": "Oda"
+    },
+    {
+        "title": "Gone Girl",
+        "author": "Gillian Flynn",
+        "isbn": "9782355841170",
+        "description": "Gone Girl is a 2012 crime thriller novel by American writer Gillian Flynn. It was published by Crown Publishing Group in June 2012. The novel became popular and made the New York Times Best Seller list. The sense of suspense in the novel comes from whether or not Nick Dunne is involved in the disappearance of his wife Amy. ---------- Also contained in: [Les apparences suvi de la novella Nous allons mourir ce soir](https://openlibrary.org/works/OL24801746W)",
+        "published_year": 2011,
+        "category": "Mystery",
+        "publisher": "G+JGruner+Jahr Polska"
+    },
+    {
+        "title": "The Da Vinci Code",
+        "author": "Dan Brown",
+        "isbn": null,
+        "description": "The Da Vinci Code by Dan Brown.",
+        "published_year": null,
+        "category": "Mystery",
+        "publisher": null
+    },
+    {
+        "title": "Brave New World",
+        "author": "Aldous Huxley",
+        "isbn": "9798365087255",
+        "description": "Originally published in 1932, this outstanding work of literature is more crucial and relevant today than ever before. Cloning, feel-good drugs, antiaging programs, and total social control through politics, programming, and media -- has Aldous Huxley accurately predicted our future? With a storyteller's genius, he weaves these ethical controversies in a compelling narrative that dawns in the year 632 AF (After Ford, the deity). When Lenina and Bernard visit a savage reservation, we experience how Utopia can destroy humanity. A powerful work of speculative fiction that has enthralled and terrified readers for generations, Brave New World is both a warning to be heeded and thought-provoking yet satisfying entertainment. - Container.",
+        "published_year": 1932,
+        "category": "Dystopian Fiction",
+        "publisher": "Neal-Schuman publishing. New York, Toronto, London"
+    },
+    {
+        "title": "The Catcher in the Rye",
+        "author": "J.D. Salinger",
+        "isbn": "9781613839560",
+        "description": "Se querem mesmo ouvir o que aconteceu, a primeira coisa que vão querer saber é onde eu nasci, como passei a porcaria da minha infância, o que meus pais faziam antes que eu nascesse, e toda essa lenga-lenga tipo David Copperfield, mas, para dizer a verdade, não estou com vontade de falar sobre isso.",
+        "published_year": 1945,
+        "category": "Classic Fiction",
+        "publisher": "Sudamericana"
+    },
+    {
+        "title": "Thinking, Fast and Slow",
+        "author": "Daniel Kahneman",
+        "isbn": "9780385676533",
+        "description": "Thinking, Fast and Slow by Daniel Kahneman.",
+        "published_year": 2011,
+        "category": "Psychology",
+        "publisher": "Worth Publishers, Incorporated"
+    },
+    {
+        "title": "The Design of Everyday Things",
+        "author": "Don Norman",
+        "isbn": null,
+        "description": "The Design of Everyday Things by Don Norman.",
+        "published_year": null,
+        "category": "Design",
+        "publisher": null
+    },
+    {
+        "title": "Meditations",
+        "author": "Marcus Aurelius",
+        "isbn": "9798633637694",
+        "description": "Meditations by Marcus Aurelius.",
+        "published_year": 2020,
+        "category": "Philosophy",
+        "publisher": "Independently Published"
+    },
+    {
+        "title": "Harry Potter and the Sorcerer's Stone",
+        "author": "J.K. Rowling",
+        "isbn": "9780439211161",
+        "description": "Harry Potter and the Sorcerer's Stone by J.K. Rowling.",
+        "published_year": 2000,
+        "category": "Fantasy",
+        "publisher": "Scholastic Professional Books"
+    }
 ]

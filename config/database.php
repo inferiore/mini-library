@@ -95,7 +95,14 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
+            // Some managed Postgres providers (e.g. Supabase) install the
+            // `vector` extension into a dedicated `extensions` schema rather
+            // than `public`, so the bare `vector` type/`<=>` operator (spec
+            // 007) wouldn't resolve on every connection Laravel opens
+            // without this. Harmless on a plain Postgres/pgvector image
+            // (local Docker, CI) where `extensions` doesn't exist — Postgres
+            // silently skips a nonexistent schema in search_path.
+            'search_path' => 'public,extensions',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 

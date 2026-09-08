@@ -36,7 +36,9 @@ function AiRecommendations() {
         event.preventDefault();
 
         if (query.trim().length < 3) {
-            setError('Please describe what you would like to read (at least 3 characters).');
+            setError(
+                'Please describe what you would like to read (at least 3 characters).',
+            );
 
             return;
         }
@@ -69,7 +71,9 @@ function AiRecommendations() {
 
             setResult((await response.json()) as RecommendationResult);
         } catch {
-            setError('Something went wrong generating recommendations. Please try again.');
+            setError(
+                'Something went wrong generating recommendations. Please try again.',
+            );
         } finally {
             setLoading(false);
         }
@@ -79,11 +83,14 @@ function AiRecommendations() {
         <section className="mt-10 rounded-md border border-[#e3e3e0] p-6 dark:border-[#3E3E3A]">
             <h2 className="text-lg font-medium">AI Recommendations</h2>
             <p className="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                Describe what you would like to read, in your own words. Suggestions
-                come from our actual catalog.
+                Describe what you would like to read, in your own words.
+                Suggestions come from our actual catalog.
             </p>
 
-            <form onSubmit={submit} className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <form
+                onSubmit={submit}
+                className="mt-4 flex flex-col gap-3 sm:flex-row"
+            >
                 <input
                     type="text"
                     value={query}
@@ -114,8 +121,8 @@ function AiRecommendations() {
 
             {result && result.status === 'no_matches' && (
                 <p className="mt-4 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                    No matching books found. Try describing what you want to read a
-                    little differently.
+                    No matching books found. Try describing what you want to
+                    read a little differently.
                 </p>
             )}
 
