@@ -138,16 +138,6 @@ jobs:
           DB_USERNAME: library
           DB_PASSWORD: library
 
-      - name: Run test suite against Postgres+pgvector
-        run: php artisan test -c phpunit.ci.xml
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: library
-          DB_USERNAME: library
-          DB_PASSWORD: library
-
   docker-build:
     runs-on: ubuntu-latest
     needs: [static-analysis, frontend, backend-tests]
