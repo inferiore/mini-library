@@ -29,6 +29,16 @@ export default defineConfig({
         }),
     ]),
     server: {
+        // Not using Laravel Sail, so there's no auto-detection of the Docker
+        // environment — set explicitly instead. 0.0.0.0 so the dev server
+        // inside the `vite` container accepts connections from the `web`/
+        // `app` containers and from the host's port mapping; hmr.host stays
+        // `localhost` because the HMR websocket is opened by the browser
+        // running on the host, not by anything inside the Docker network.
+        host: '0.0.0.0',
+        hmr: {
+            host: 'localhost',
+        },
         watch: {
             ignored: [
                 '**/.agents/**',

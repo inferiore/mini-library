@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\AI\Contracts\EmbeddingServiceInterface;
+use App\AI\Contracts\LLMServiceInterface;
+use App\AI\Http\OpenAiCompatibleEmbeddingService;
+use App\AI\Http\OpenAiCompatibleLLMService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(EmbeddingServiceInterface::class, OpenAiCompatibleEmbeddingService::class);
+        $this->app->bind(LLMServiceInterface::class, OpenAiCompatibleLLMService::class);
     }
 
     /**

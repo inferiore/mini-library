@@ -1,0 +1,23 @@
+# Layer on top of docker-compose.yml for a production-shaped deploy:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Not auto-loaded — docker-compose.override.yml is what `docker compose up`
+# picks up by default locally, so this file is inert unless named explicitly.
+
+services:
+  app:
+    restart: unless-stopped
+    # No registry exists yet (spec 010 explicitly defers the registry/push
+    # step). Once one does, replace the inherited `build:` here with a pinned
+    # `image: <registry>/<repo>:<tag>` so prod runs a known-good, previously
+    # validated image instead of rebuilding on the deploy host.
+
+  web:
+    restart: unless-stopped
+
+  postgres:
+    restart: unless-stopped
+
+  queue:
+    restart: unless-stopped
+    # Same registry note as `app` above — same image, same future change.

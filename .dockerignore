@@ -1,0 +1,42 @@
+# Version control / editor / agent metadata — never needed in an image layer.
+.git
+.github
+.claude
+.agents
+.cursor
+.junie
+.idea
+.vscode
+.DS_Store
+
+# Docs aren't needed at runtime.
+docs
+
+# Secrets: never bake .env into an image layer. .env.example is safe (placeholders only).
+.env
+.env.*
+!.env.example
+
+# Dependencies are installed fresh inside the image, not copied from the host.
+node_modules
+vendor
+
+# Runtime-generated/local state — regenerated inside the container, not baked in.
+storage/*.key
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*.log
+bootstrap/cache/*.php
+*.sqlite
+*.log
+
+# Frontend build output is produced fresh by the frontend-build stage.
+public/build
+public/hot
+
+# Docker's own files don't need to be inside the build context they define —
+# except docker-entrypoint.sh, which the Dockerfile explicitly COPYs in.
+docker-compose*.yml
+Dockerfile
