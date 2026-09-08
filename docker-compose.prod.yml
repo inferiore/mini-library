@@ -1,6 +1,8 @@
 # Layer on top of docker-compose.yml for a production-shaped deploy:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-#       up -d --build --no-deps app web queue
+#       pull app queue
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#       up -d --no-deps app web queue
 #
 # Not auto-loaded — docker-compose.override.yml is what `docker compose up`
 # picks up by default locally, so this file is inert unless named explicitly.
@@ -12,18 +14,25 @@
 # container too, purely because `app`/`queue` declare `depends_on: postgres`
 # in the base file. `DB_*` in the host's own `.env` points at Supabase
 # instead (see DEPLOYMENT.md).
+#
+# `app`/`queue` are pulled from GHCR rather than built here: rebuilding PHP
+# from source (opcache/JIT compilation) was timing out on the target host's
+# hardware. The `docker-build` CI job builds and pushes this same image on
+# every push to main (see .github/workflows/tests.yml) — the host only ever
+# pulls a previously-validated artifact, never compiles anything itself.
+# `IMAGE_TAG` defaults to `latest` but can be overridden (e.g.
+# `IMAGE_TAG=<previous-sha> docker compose ... up -d --no-deps app queue`)
+# to roll back to a specific previous build without rebuilding it — see
+# DEPLOYMENT.md's Rollback section.
 
 services:
     app:
+        image: ghcr.io/inferiore/mini-library:${IMAGE_TAG:-latest}
         restart: unless-stopped
-        # No registry exists yet (spec 010 explicitly defers the registry/push
-        # step). Once one does, replace the inherited `build:` here with a pinned
-        # `image: <registry>/<repo>:<tag>` so prod runs a known-good, previously
-        # validated image instead of rebuilding on the deploy host.
 
     web:
         restart: unless-stopped
 
     queue:
+        image: ghcr.io/inferiore/mini-library:${IMAGE_TAG:-latest}
         restart: unless-stopped
-        # Same registry note as `app` above — same image, same future change.

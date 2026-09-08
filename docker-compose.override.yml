@@ -4,16 +4,25 @@
 # Switches app/queue to the `dev` build target and bind-mounts the working
 # tree so PHP/Blade/Inertia source changes are visible with neither a rebuild
 # nor a container recreation. Adds a `vite` service for frontend HMR.
+#
+# The base docker-compose.yml deliberately defines neither `build:` nor
+# `image:` for app/queue (see its own comment) — this is the overlay that
+# supplies `build:` (docker-compose.prod.yml supplies `image:` instead, for
+# a GHCR pull with no local build at all).
 
 services:
     app:
         build:
+            context: .
+            dockerfile: Dockerfile
             target: dev
         volumes:
             - .:/var/www/html
 
     queue:
         build:
+            context: .
+            dockerfile: Dockerfile
             target: dev
         volumes:
             - .:/var/www/html

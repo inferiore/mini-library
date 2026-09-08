@@ -7,13 +7,17 @@
 # (`config:cache` + `migrate --force`), never baked in at build time — so an
 # `.env` edit only ever needs `docker compose up -d --force-recreate`, never a
 # rebuild. See Dockerfile / docker-entrypoint.sh for the mechanics.
+#
+# `app`/`queue` deliberately have neither `build:` nor `image:` here — each
+# overlay supplies exactly one: docker-compose.override.yml adds `build:`
+# (dev target, for local HMR/bind mounts), docker-compose.prod.yml adds
+# `image:` (pulled from GHCR, never built on the deploy host). Compose merges
+# `build:`/`image:` together rather than letting one overlay replace the
+# other, so this base file must define neither for the prod pull-based flow
+# to actually pull instead of building.
 
 services:
     app:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: production
         env_file:
             - .env
         volumes:
@@ -51,10 +55,6 @@ services:
             retries: 10
 
     queue:
-        build:
-            context: .
-            dockerfile: Dockerfile
-            target: production
         env_file:
             - .env
         command: ['php', 'artisan', 'queue:work', '--tries=3']

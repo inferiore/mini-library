@@ -141,29 +141,62 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     needs: [static-analysis, frontend, backend-tests]
+    # Needed only for the push step below (on main); the build-validation
+    # step itself needs no elevated permissions and still runs on PRs too,
+    # where `packages: write` is granted but simply unused (the push step's
+    # own `if:` keeps PRs from ever attempting to push).
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # Build-only: no registry is configured yet (see docker-compose.prod.yml
-      # and spec 010), so this validates that the production image builds
-      # cleanly and doesn't push anywhere.
+      # Validates the production image builds cleanly on every PR/push —
+      # kept separate from the registry tag below so a PR build never
+      # produces or depends on a pushed image.
       - name: Build production image
         run: docker build --target production -t mini-library:ci .
+
+      # Pushed only on main, not PRs: this is what the `deploy` job later
+      # pulls (see the `deploy` job below) instead of rebuilding from source
+      # on the target host — rebuilding PHP from source there was timing out
+      # (opcache/JIT compilation alone runs several minutes on a small VM).
+      # Tagged with both `latest` (what the host pulls) and the commit SHA
+      # (an addressable, previously-built artifact to roll back to — see
+      # DEPLOYMENT.md's Rollback section, no longer "rebuild the previous
+      # commit" now that a registry exists).
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0b # v3.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push production image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          image="ghcr.io/${{ github.repository }}"
+          docker tag mini-library:ci "$image:latest"
+          docker tag mini-library:ci "$image:${{ github.sha }}"
+          docker push "$image:latest"
+          docker push "$image:${{ github.sha }}"
 
   # Re-scoped into spec 010 on 2026-09-08 (see docs/specs/010-deployment.md's
   # "Re-scoping note") — the spec as originally written deferred this job to a
   # follow-up spec, but a real deploy target now exists.
   #
   # Deliberately does NOT check the repo out or build anything here: the
-  # actual build happens *on the target host* (see the `script:` below), from
-  # the same Dockerfile CI just proved builds cleanly in `docker-build`. There
-  # is still no image registry, so "deploy" means "the host rebuilds the
-  # production image itself from the git commit it just pulled" — see
-  # DEPLOYMENT.md's rollback section for why that shapes the rollback story
-  # too (no registry to just re-point at a prior tag).
+  # image was already built and pushed to GHCR by `docker-build` above — this
+  # job only pulls it and restarts containers on the target host. Rebuilding
+  # PHP from source on the host itself (the original approach) was timing
+  # out there; building once on GitHub's runners and shipping a finished
+  # artifact avoids that entirely, and also means rollback is now "pull a
+  # previous tag" rather than "rebuild an old commit" (see DEPLOYMENT.md's
+  # Rollback section).
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
@@ -175,7 +208,7 @@ jobs:
     # checked explicitly too rather than trusted implicitly).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     # Serializes deploys so two merges landing close together can't race each
-    # other's `git pull` / `docker compose up -d --build` on the same host
+    # other's `git pull` / `docker compose pull`/`up` on the same host
     # directory (same class of concurrent-writer problem docker-entrypoint.sh
     # already avoids for migrations, one level up the stack).
     concurrency:
@@ -192,17 +225,25 @@ jobs:
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           # Forwarded into the remote script via `envs:` below rather than
-          # interpolated directly into the `script:` string, so the path
-          # value is never spliced into shell text GitHub Actions has to
-          # re-parse — it just arrives as a normal env var over the SSH
+          # interpolated directly into the `script:` string, so the values
+          # are never spliced into shell text GitHub Actions has to
+          # re-parse — they just arrive as normal env vars over the SSH
           # session, same as SSH_HOST/SSH_USER/DEPLOY_SSH_KEY never appear in
-          # this file as anything but a `secrets.*` reference.
+          # this file as anything but a `secrets.*` reference. GITHUB_TOKEN
+          # is the workflow's own short-lived token (no new secret needed) —
+          # it has `packages: write` on this job (see `docker-build` above)
+          # and is valid to both push and pull for the duration of this run
+          # only, so `docker login` on the host is re-established fresh
+          # every deploy rather than relying on a long-lived credential
+          # sitting on disk there.
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: DEPLOY_PATH
+          envs: DEPLOY_PATH,GHCR_TOKEN,GHCR_USER
           script: |
             set -e
 
@@ -212,28 +253,22 @@ jobs:
             # DEPLOYMENT.md's "secrets live on the host" note). --ff-only
             # deliberately refuses to deploy if the host directory has local
             # commits/changes CI doesn't know about, rather than silently
-            # discarding them.
+            # discarding them. Still needed even in the pull-based flow: this
+            # is what keeps docker-compose.yml/docker-compose.prod.yml
+            # themselves in sync on the host, and is what `git log`/rollback
+            # commands below operate against.
             cd "$DEPLOY_PATH"
             git fetch origin main
             git merge --ff-only origin/main
 
-            # No registry: this rebuilds the production image locally on the
-            # host from the commit just pulled. docker-entrypoint.sh handles
-            # config:cache + migrate --force at container start, same as
-            # local dev and the manual runbook in DEPLOYMENT.md — this job
-            # intentionally does nothing migration-related itself.
-            #
-            # Reclaim disk before building: with no registry, every deploy
-            # rebuilds the production image from scratch on this host (see
-            # below), leaving the previous build's now-superseded layers and
-            # BuildKit cache behind. Left unchecked across repeated deploys,
-            # that silently fills the disk until a build fails partway
-            # through with "No space left on device" — confirmed happening
-            # in practice. `-a` prunes unused images, not just dangling
-            # ones; neither command touches running containers or named
-            # volumes (so app-public and any other persisted data survive).
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # Reclaim disk from any images/layers superseded by the pull
+            # below — cheap insurance against the disk slowly filling across
+            # many deploys (each pulled image differs from the last only in
+            # its top layers, but old ones aren't automatically removed).
+            # Neither command touches running containers or named volumes.
             docker image prune -af
-            docker builder prune -af
 
             # --no-deps app web queue: production uses an external managed
             # Postgres+pgvector (Supabase), not the bundled `postgres`
@@ -241,7 +276,13 @@ jobs:
             # the local postgres container anyway, solely because app/queue
             # declare `depends_on: postgres` in the base compose file. The
             # host's own .env points DB_* at Supabase instead.
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --no-deps app web queue
+            #
+            # docker-entrypoint.sh handles config:cache + migrate --force at
+            # container start, same as local dev and the manual runbook in
+            # DEPLOYMENT.md — this job intentionally does nothing
+            # migration-related itself.
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app queue
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps app web queue
 
             # Fails the job (and, per this Action, the whole workflow run)
             # rather than reporting a false success if the app doesn't come
