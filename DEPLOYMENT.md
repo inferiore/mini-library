@@ -159,22 +159,25 @@ Host" below — this file is never generated or copied by any deploy tooling).
 ```
 cd /path/to/checkout
 git pull   # or checkout the specific commit/tag to deploy
+docker login ghcr.io -u <your-github-username>   # one-time per session; prompts for a PAT with read:packages
 docker image prune -af
-docker builder prune -af
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app queue
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-    up -d --build --no-deps app web queue
+    up -d --no-deps app web queue
 ```
 
 What this does:
 
-- `docker image prune -af` / `docker builder prune -af` reclaim disk from the
-  _previous_ deploy's now-superseded image layers and build cache before starting a
-  new build. With no registry, every deploy rebuilds from scratch on this host (see
-  `--build` below) — without pruning, that silently fills the disk across repeated
-  deploys until a build fails partway through with "No space left on device" (this
-  happened in practice before pruning was added). Neither command touches running
-  containers or named volumes.
-
+- `docker login ghcr.io` authenticates the pull below. The automated CD job does this
+  itself using the workflow's own short-lived `GITHUB_TOKEN` (see below) — a human
+  running this by hand needs their own GitHub Personal Access Token with
+  `read:packages` scope instead, since `GITHUB_TOKEN` only exists inside a workflow run.
+- `docker image prune -af` reclaims disk from previously-pulled images now superseded
+  by the one about to be pulled — cheap insurance against the disk slowly filling
+  across many deploys. Doesn't touch running containers or named volumes.
+- `docker compose ... pull app queue` fetches the image `docker-build` already built
+  and validated on GitHub's runners (tagged `latest`, plus the commit SHA — see
+  Rollback below) — nothing is compiled or built on this host at all.
 - Layers `docker-compose.prod.yml` on top of the base `docker-compose.yml` —
   `docker-compose.override.yml` is _not_ picked up (it's only auto-loaded when no
   `-f` flags are given), so this never accidentally runs the `dev` build target, bind
@@ -187,10 +190,6 @@ What this does:
 postgres` in the base compose file. Production uses external Supabase instead (see
   "Required Infrastructure" above), so the local `postgres` container is never run
   on the deploy host at all.
-- `--build` rebuilds the `production` image from the checked-out commit before
-  starting. There's no registry yet (see below), so this is the only way to run the
-  code currently on disk — the host always builds its own image rather than pulling a
-  pre-built one.
 - `docker-entrypoint.sh` runs `config:cache` and `migrate --force` on the `app`
   container at start, per the container-start-not-build-time contract documented
   throughout this repo.
@@ -199,9 +198,17 @@ After it's up, confirm with the health checks below.
 
 ## Automated Deployment (CD)
 
-**Implemented** as of this change, re-scoped into spec 010 by explicit user direction
-(see that spec's own re-scoping note) rather than deferred to a follow-up spec — a real
-deploy target now exists.
+**Implemented**, re-scoped into spec 010 by explicit user direction (see that spec's
+own re-scoping note) rather than deferred to a follow-up spec — a real deploy target
+now exists. Originally this rebuilt the production image from source on the deploy
+host itself; that was switched to a registry-based pull after the host's hardware
+proved too slow to compile PHP from source within a reasonable time (a real deploy
+timed out mid-compile) — see `docker-build` below.
+
+The `docker-build` CI job (runs on every PR/push, build-validation only) additionally
+logs into GHCR and pushes the validated image — but only on a real push to `main`,
+never on a PR — tagged both `latest` and the commit SHA, using the workflow's own
+short-lived `GITHUB_TOKEN` (`packages: write` on that job only; no new secret).
 
 The `deploy` job in `.github/workflows/tests.yml`:
 
@@ -213,9 +220,11 @@ The `deploy` job in `.github/workflows/tests.yml`:
   way it would block a manual deploy decision.
 - Uses `appleboy/ssh-action` (pinned to a release commit SHA, `v1.2.5`) to SSH into the
   target host and run **exactly the manual runbook above**: `cd $DEPLOY_PATH && git
-fetch/merge --ff-only && docker compose -f docker-compose.yml -f
-docker-compose.prod.yml up -d --build --no-deps app web queue`, then polls `GET /up`
-  (via `docker compose exec web wget ... http://localhost/up`, inside the container
+fetch/merge --ff-only`, `docker login ghcr.io` (using the job's own `GITHUB_TOKEN` —
+  `packages: read` on this job, granted fresh every run, never a long-lived credential
+  sitting on the host), `docker image prune -af`, `docker compose ... pull app queue`,
+  then `docker compose ... up -d --no-deps app web queue`, then polls `GET /up` (via
+  `docker compose exec web wget ... http://127.0.0.1/up`, inside the container
   network — no dependency on knowing the host's external port) for up to ~30 seconds
   before failing the job.
 - Required GitHub Secrets (referenced only as `${{ secrets.NAME }}` in the workflow —
@@ -227,10 +236,12 @@ docker-compose.prod.yml up -d --build --no-deps app web queue`, then polls `GET 
       `SSH_USER`).
     - `DEPLOY_PATH` — absolute path on the deploy target where this repo is checked out
       (e.g. `/srv/mini-library`) and where its production `.env` already lives.
+      Nothing GHCR-specific needs supplying — pushing and pulling both use the workflow's
+      own `GITHUB_TOKEN`, scoped per-job via that job's `permissions:` block.
 - Serialized via a `concurrency` group (`production-deploy`) so two merges landing in
-  quick succession can't race each other's `git pull`/`docker compose up` on the same
-  host directory.
-- `set -e` in the remote script means any failed step (a merge conflict, a build
+  quick succession can't race each other's `git pull`/`docker compose pull`/`up` on the
+  same host directory.
+- `set -e` in the remote script means any failed step (a merge conflict, a login
   failure, a failed health check) stops the script immediately and the job — and the
   whole workflow run — is marked failed. It does not attempt any cleanup or rollback on
   failure (see "What CD Does Not Do" below).
@@ -259,16 +270,12 @@ first time is a manual, one-time setup step — not something this pipeline does
 - **No automatic rollback.** A failed health check fails the job loudly, but the
   script does not revert the host to the previous commit/image on failure. Recovery is
   manual (see "Rollback" below).
-- **No zero-downtime/blue-green deploy.** `docker compose up -d --build` recreates
-  containers in place; there is a brief window where `app`/`web` may be restarting.
-  Acceptable for this project's current scale; not addressed further here.
+- **No zero-downtime/blue-green deploy.** `docker compose up -d` recreates containers
+  in place; there is a brief window where `app`/`web` may be restarting. Acceptable
+  for this project's current scale; not addressed further here.
 - **No database backup before migrating.** `migrate --force` runs unconditionally at
   container start (same as every other deploy/restart). A destructive migration would
   need to be caught in review, not by this pipeline.
-- **No image registry / pre-built artifact reuse.** Every deploy rebuilds the
-  production image from source _on the target host itself_. This also shapes rollback
-  (see below) — there's no "just re-point at the previous tag," because there was never
-  a separate, addressable previous tag to begin with.
 - **No host provisioning.** Docker/Docker Compose must already be installed on the
   target host, `$DEPLOY_PATH` must already be a valid git checkout with a working
   remote, and the deploy SSH key must already be authorized — this pipeline assumes all
@@ -279,28 +286,31 @@ first time is a manual, one-time setup step — not something this pipeline does
 
 ## Rollback
 
-Because there is no image registry (see above), rollback is **not** "re-point at a
-previously-pushed tag" — it's "check out the previous good commit and let the host
-rebuild from it," the same mechanism as a forward deploy:
+Every image `docker-build` pushes is tagged with the commit SHA it was built from, in
+addition to `latest` — rollback is a tag switch, not a rebuild:
 
 ```
 cd $DEPLOY_PATH
-git log --oneline -10        # find the last known-good commit
-git checkout <previous-sha>  # detached HEAD at the previous good commit
-docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-    up -d --build --no-deps app web queue
+git log --oneline -10   # find the last known-good commit SHA
+IMAGE_TAG=<previous-sha> docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+    pull app queue
+IMAGE_TAG=<previous-sha> docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+    up -d --no-deps app web queue
 ```
 
-Then confirm with the health checks below. Once satisfied, either stay on the detached
-commit until the next intentional deploy, or reset `main` to that commit and push
-(reverting forward) so the automated pipeline's next run doesn't fight with a manually
-detached host — decide deliberately, this pipeline does not do this step for you.
+`IMAGE_TAG` is read by `docker-compose.prod.yml` (`image:
+ghcr.io/inferiore/mini-library:${IMAGE_TAG:-latest}`, defaulting to `latest` when
+unset — this is exactly what the normal forward-deploy runbook above relies on).
+Passing a previous commit's SHA here pulls and runs that exact, previously-validated
+image again — nothing is rebuilt.
 
-This is slower than a registry-based rollback (a full rebuild vs. an instant tag
-switch) but requires no additional infrastructure. Adding a registry so rollback
-becomes "pull the previous tag" instead of "rebuild the previous commit" is listed
-under "Not Yet Implemented" in spec 010's original text and remains a real gap, not
-solved by this change.
+Then confirm with the health checks below. Once satisfied, either stay pinned to that
+`IMAGE_TAG` until the next intentional deploy, or revert `main` to that commit and push
+(reverting forward) so the next automated CD run naturally lands back on `latest`
+pointing at the right thing — decide deliberately, this pipeline does not do this step
+for you. Note this only rolls back the application image; it does not touch the
+database (see "No database backup before migrating" above) — a rollback that depends
+on a schema/data change being reverted too needs that handled separately.
 
 ## Health Checks
 
@@ -309,8 +319,12 @@ solved by this change.
   From the host: `curl -f http://localhost:${APP_PORT:-8000}/up` (against the `web`
   service's published port) or, without relying on the host's port mapping, `docker
 compose -f docker-compose.yml -f docker-compose.prod.yml exec web wget -qO- 
-http://localhost/up` (hits the container network directly — this is what the CD job
-  itself uses).
+http://127.0.0.1/up` (hits the container network directly — this is what the CD job
+  itself uses). Use `127.0.0.1`, not `localhost`, inside the container: its
+  `/etc/hosts` maps `localhost` to both `127.0.0.1` and `::1`, `wget` tries the IPv6
+  entry first, and nginx here only listens on `0.0.0.0:80` — `localhost` reliably
+  fails with "Connection refused" even when the app is genuinely healthy (reproduced
+  and confirmed against a live deploy).
 - **Queue worker**: `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 queue` should show `Up`. There's no HTTP endpoint for queue health — a crashed queue
   container doesn't surface as an app-facing error, it just means jobs silently stop
@@ -393,11 +407,6 @@ Criteria).
 These are genuinely out of scope as of this change — not silently deferred, not
 partially built:
 
-- **Container image registry.** No GHCR/Docker Hub push anywhere in this pipeline.
-  Both the manual runbook and the CD job rebuild the production image from source on
-  whatever host is running it. Adding a registry would let `docker-compose.prod.yml`
-  pin an immutable `image:` tag instead of `build:` (see that file's own comment) and
-  would make rollback an instant re-point instead of a rebuild.
 - **Zero-downtime / blue-green deploys.**
 - **Database backup-before-migrate.**
 - **Automatic rollback on failed health check.** The CD job fails loudly; it does not

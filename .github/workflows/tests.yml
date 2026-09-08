@@ -299,8 +299,17 @@ jobs:
             # (see DEPLOYMENT.md's "Not Yet Implemented" section) — a failed
             # health check here means manual intervention, not a silent
             # revert.
+            #
+            # 127.0.0.1, not localhost: the web container's /etc/hosts maps
+            # `localhost` to both 127.0.0.1 and ::1, and wget tries the IPv6
+            # entry first — nginx here only listens on 0.0.0.0:80 (the
+            # official image's IPv6-listen entrypoint script can't modify
+            # our mounted-read-only default.conf), so `localhost` resolved
+            # "Connection refused" every single attempt even though the app
+            # was actually healthy and responding correctly on IPv4.
+            # Confirmed by reproducing both directly against a live deploy.
             attempt=0
-            until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web wget -q -O- http://localhost/up > /dev/null; do
+            until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web wget -q -O- http://127.0.0.1/up > /dev/null; do
               attempt=$((attempt + 1))
               if [ "$attempt" -ge 10 ]; then
                 echo "Deploy health check failed: GET /up did not succeed after ${attempt} attempts" >&2

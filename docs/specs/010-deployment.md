@@ -27,12 +27,17 @@ different in practice:
   SSH using `appleboy/ssh-action` and four new GitHub Secrets (`SSH_HOST`, `SSH_USER`,
   `DEPLOY_SSH_KEY`, `DEPLOY_PATH`). See `DEPLOYMENT.md`'s "Automated Deployment (CD)"
   section for exactly what it does and doesn't do — it's intentionally honest about
-  real remaining gaps (no rollback-on-failure, no image registry, no zero-downtime
+  real remaining gaps (no rollback-on-failure beyond a tag switch, no zero-downtime
   deploy, no DB backup-before-migrate; full list in `DEPLOYMENT.md`'s "Not Yet
   Implemented" section).
-- Still no image registry — deploy and rollback both work by rebuilding the production
-  image from source on the target host itself, not by pulling a pre-built tag. This
-  remains a real, undone gap (see `DEPLOYMENT.md`), not silently solved by adding CD.
+- **A GHCR image registry was added shortly after CD first shipped** — the initial
+  version rebuilt the production image from source on the deploy host itself, but the
+  host's hardware proved too slow to compile PHP from source in reasonable time (a
+  real deploy timed out mid-compile). `docker-build` now builds once on GitHub's
+  runners and pushes to `ghcr.io/inferiore/mini-library` (tagged `latest` + the commit
+  SHA); `deploy` only pulls, never builds. This also means rollback is now a tag
+  switch (`IMAGE_TAG=<previous-sha>`), not a rebuild — see `DEPLOYMENT.md`'s Rollback
+  section.
 - `needed_variable.md` has been updated to move the SSH/deploy-path secrets out of its
   "Deferred" section and list them as required GitHub Secrets for this now-implemented
   `deploy` job.
