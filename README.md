@@ -9,6 +9,9 @@ from the actual catalog, each with a plain-English explanation of why it matches
 Everything else in the app (catalog, roles, checkout, inventory) exists to give that
 feature a real, trustworthy collection to recommend from.
 
+**Live deployment**: http://35.190.133.156/ — deployed automatically via the CI/CD
+pipeline described in `DEPLOYMENT.md` on every push to `main`.
+
 ## AI Recommendations
 
 Instead of only exact keyword search, a member can describe what they're looking for
@@ -55,6 +58,41 @@ Librarians can add or remove physical copies via a dedicated "Adjust Inventory"
 action. Removing copies is blocked if it would drop availability below the number
 currently on loan — the system tells them exactly how many copies need to come back
 first, rather than allowing an inconsistent state.
+
+### How the concurrency guarantee actually works
+
+The obvious way to write "decrement available copies, but not below zero" is to read
+the current count, check it in PHP, then write the new value back. That's also the
+classic way to get it wrong: two requests can both read "1 copy left" a millisecond
+apart, both decide it's safe, and both succeed — leaving `available_copies` at -1.
+
+Instead, every checkout, return, and inventory adjustment issues a single database
+statement that does the check and the write **atomically**, in one round trip:
+
+```sql
+UPDATE books
+SET available_copies = available_copies - 1
+WHERE id = ? AND available_copies > 0
+```
+
+The database itself is what refuses a second concurrent request the moment the count
+hits zero — not application code reacting a beat too late. If the `UPDATE` affects zero
+rows, the code knows immediately that it lost the race and returns a clear "no longer
+available" error instead of silently corrupting the count. Under N simultaneous
+checkout attempts on the last copy, exactly one succeeds — every time, not "almost
+always."
+
+This also had to work identically on both databases the project uses: Postgres in
+production, and SQLite for the fast local test suite. Row-locking approaches
+(`SELECT ... FOR UPDATE`) exist in Postgres but are silently ignored by SQLite, which
+would make the concurrency tests pass locally for the wrong reason — a false sense of
+safety. The guarded-`UPDATE` pattern above needs no row locks at all, so it's genuinely
+race-safe on both, and the same automated tests that catch a regression locally are
+proving the real thing.
+
+As a last line of defense, Postgres also enforces the invariant at the schema level
+(a `CHECK` constraint), so even a future bug in application code couldn't write an
+invalid value — the database itself would reject it.
 
 ## Local setup
 
