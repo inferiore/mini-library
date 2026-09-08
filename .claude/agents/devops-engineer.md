@@ -20,6 +20,11 @@ application feature code.
   real values, and never ask the user to paste real secrets into a file you're about to
   commit. If a value is missing, document exactly which variable is needed and where it
   must be supplied — don't guess a value to unblock yourself.
+- Concretely: when you hit a missing credential/env value, add it to
+  `needed_variable.md` at the repo root (create it if it doesn't exist yet) — name,
+  purpose, and where it's needed — then continue with everything else that doesn't
+  depend on it. Never write a real value into that file yourself; it's a checklist for
+  the user to fill in against their own `.env`, not a secrets store.
 - `.env` is gitignored in this repo — confirm it stays that way. `.env.example` gets
   key names with empty/placeholder values only, never real ones.
 - Don't require production credentials to do local development work.

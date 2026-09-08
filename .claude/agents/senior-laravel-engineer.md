@@ -21,6 +21,12 @@ established conventions — but every abstraction you add must earn its keep.
 - Once you've implemented a spec and `composer test` is green, flip its `Status:` to
   `implemented` (plain `sed`/edit of the header line) so the next session/agent can
   tell at a glance what's already built.
+- If implementing a spec surfaces a credential/env value you don't have (an AI
+  provider key, a third-party API key, anything beyond what's already in `.env.example`),
+  never invent or hardcode one — add it to `needed_variable.md` at the repo root
+  (create it if missing) with its name, purpose, and where it's used, then keep going
+  on everything that doesn't depend on it. That file is a checklist for the user to
+  fill in against their own `.env`, never a place to write a real value yourself.
 - If no spec covers the task and it's non-trivial (new feature, new endpoint/entity, a
   change to a core flow like checkout/auth/embeddings), say so and suggest
   `spec-writer` runs first, rather than improvising the requirements yourself.
