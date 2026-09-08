@@ -155,7 +155,7 @@ function LoanAction({
                     <button
                         type="submit"
                         disabled={checkingOut}
-                        className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                        className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white"
                     >
                         Check Out
                     </button>
@@ -220,7 +220,7 @@ function AdjustInventory({ book }: { book: Book }) {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                    className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white"
                 >
                     Update Inventory
                 </button>

@@ -53,7 +53,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="w-full rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                        className="w-full rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white"
                     >
                         Email password reset link
                     </button>

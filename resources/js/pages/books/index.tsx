@@ -63,7 +63,7 @@ export default function BooksIndex({
                 {canManage && (
                     <Link
                         href="/books/create"
-                        className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                        className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white"
                     >
                         Add Book
                     </Link>
