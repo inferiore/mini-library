@@ -52,4 +52,19 @@ class RagDocumentFactory extends Factory
             'attempts' => 3,
         ]);
     }
+
+    public function pending(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => RagDocumentStatus::Pending,
+        ]);
+    }
+
+    public function processing(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => RagDocumentStatus::Processing,
+            'attempts' => 1,
+        ]);
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\RagDocumentController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\DemoLoginController;
 use App\Http\Controllers\InventoryController;
@@ -40,3 +41,15 @@ Route::middleware('auth')->group(function () {
     Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
     Route::put('loans/{loan}', [LoanController::class, 'update'])->name('loans.update');
 });
+
+// Admin-only tooling (spec 009). The `role:admin` group is the reusable route
+// gate for future admin sections; each action is also Policy-checked.
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('embeddings', [RagDocumentController::class, 'index'])->name('embeddings.index');
+        Route::get('embeddings/{ragDocument}', [RagDocumentController::class, 'show'])->name('embeddings.show');
+        Route::post('embeddings/{ragDocument}/retry', [RagDocumentController::class, 'retry'])->name('embeddings.retry');
+        Route::post('embeddings/{ragDocument}/regenerate', [RagDocumentController::class, 'regenerate'])->name('embeddings.regenerate');
+    });

@@ -58,6 +58,43 @@ class RagDocumentService
     }
 
     /**
+     * Reset a single document back to `pending` and re-dispatch its embedding
+     * job (spec 009's Retry/Regenerate). The reset + guard is a single atomic
+     * `UPDATE ... WHERE status != 'processing'` (the spec 004/005 guarded-write
+     * pattern, not a read-then-write): if a background worker has already
+     * flipped the row to `processing` between the admin's read and this write,
+     * the update affects 0 rows and we skip the dispatch — so a genuinely
+     * in-flight job can never be duplicated.
+     *
+     * Returns true when the document was requeued, false when it was skipped
+     * because it was already `processing`.
+     */
+    public function requeue(RagDocument $document): bool
+    {
+        $affected = DB::table('rag_documents')
+            ->where('id', $document->id)
+            ->where('status', '!=', RagDocumentStatus::Processing->value)
+            ->update([
+                'status' => RagDocumentStatus::Pending->value,
+                'attempts' => 0,
+                'error_message' => null,
+                'embedding' => null,
+                'embedding_provider' => null,
+                'embedding_model' => null,
+                'processed_at' => null,
+                'updated_at' => now(),
+            ]);
+
+        if ($affected === 0) {
+            return false;
+        }
+
+        GenerateBookEmbedding::dispatch($document->id);
+
+        return true;
+    }
+
+    /**
      * One semantically coherent document per book, composed from its
      * structured fields. Title and author are always present; category,
      * publisher and description are omitted when empty, so a book with a

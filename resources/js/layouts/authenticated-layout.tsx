@@ -41,6 +41,14 @@ export default function AuthenticatedLayout({ children }: PropsWithChildren) {
                                         All Loans
                                     </Link>
                                 )}
+                                {user.role === 'admin' && (
+                                    <Link
+                                        href="/admin/embeddings"
+                                        className="hover:underline"
+                                    >
+                                        Embeddings
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>
