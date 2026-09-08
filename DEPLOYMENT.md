@@ -159,11 +159,21 @@ Host" below — this file is never generated or copied by any deploy tooling).
 ```
 cd /path/to/checkout
 git pull   # or checkout the specific commit/tag to deploy
+docker image prune -af
+docker builder prune -af
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
     up -d --build --no-deps app web queue
 ```
 
 What this does:
+
+- `docker image prune -af` / `docker builder prune -af` reclaim disk from the
+  _previous_ deploy's now-superseded image layers and build cache before starting a
+  new build. With no registry, every deploy rebuilds from scratch on this host (see
+  `--build` below) — without pruning, that silently fills the disk across repeated
+  deploys until a build fails partway through with "No space left on device" (this
+  happened in practice before pruning was added). Neither command touches running
+  containers or named volumes.
 
 - Layers `docker-compose.prod.yml` on top of the base `docker-compose.yml` —
   `docker-compose.override.yml` is _not_ picked up (it's only auto-loaded when no
@@ -345,6 +355,14 @@ Criteria).
 
 ## Troubleshooting
 
+- **Deploy build fails with "No space left on device"**: the host ran out of disk —
+  every deploy rebuilds the production image from scratch (no registry), and old
+  image layers/build cache accumulate across repeated deploys if nothing prunes them.
+  The runbook and CD job both prune before building now (see above), but if the disk
+  is already full when this happens, pruning as part of the failed run doesn't help —
+  SSH in and run `docker system prune -af` (add `--volumes` only if you're certain no
+  volume holds data you need — this project has none in production once Supabase is
+  the database) manually first, then re-run the deploy.
 - **`app`/`queue` won't start, logs show a migration error**: locally, check `DB_*`
   values in `.env` match `POSTGRES_*` on the `postgres` service, and that `postgres` is
   actually healthy (`docker compose ps postgres`). In production (external Supabase),

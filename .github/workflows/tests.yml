@@ -223,6 +223,18 @@ jobs:
             # local dev and the manual runbook in DEPLOYMENT.md — this job
             # intentionally does nothing migration-related itself.
             #
+            # Reclaim disk before building: with no registry, every deploy
+            # rebuilds the production image from scratch on this host (see
+            # below), leaving the previous build's now-superseded layers and
+            # BuildKit cache behind. Left unchecked across repeated deploys,
+            # that silently fills the disk until a build fails partway
+            # through with "No space left on device" — confirmed happening
+            # in practice. `-a` prunes unused images, not just dangling
+            # ones; neither command touches running containers or named
+            # volumes (so app-public and any other persisted data survive).
+            docker image prune -af
+            docker builder prune -af
+
             # --no-deps app web queue: production uses an external managed
             # Postgres+pgvector (Supabase), not the bundled `postgres`
             # service — without --no-deps, Compose would still create/start
