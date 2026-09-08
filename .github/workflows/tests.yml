@@ -222,7 +222,14 @@ jobs:
             # config:cache + migrate --force at container start, same as
             # local dev and the manual runbook in DEPLOYMENT.md — this job
             # intentionally does nothing migration-related itself.
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+            #
+            # --no-deps app web queue: production uses an external managed
+            # Postgres+pgvector (Supabase), not the bundled `postgres`
+            # service — without --no-deps, Compose would still create/start
+            # the local postgres container anyway, solely because app/queue
+            # declare `depends_on: postgres` in the base compose file. The
+            # host's own .env points DB_* at Supabase instead.
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --no-deps app web queue
 
             # Fails the job (and, per this Action, the whole workflow run)
             # rather than reporting a false success if the app doesn't come

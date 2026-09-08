@@ -1,8 +1,17 @@
 # Layer on top of docker-compose.yml for a production-shaped deploy:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#       up -d --build --no-deps app web queue
 #
 # Not auto-loaded — docker-compose.override.yml is what `docker compose up`
 # picks up by default locally, so this file is inert unless named explicitly.
+#
+# Production uses an external managed Postgres+pgvector (Supabase) rather
+# than the bundled `postgres` service, which exists only for local dev/CI —
+# hence naming `app web queue` explicitly with `--no-deps` above: without
+# `--no-deps`, Compose would still create/start the local `postgres`
+# container too, purely because `app`/`queue` declare `depends_on: postgres`
+# in the base file. `DB_*` in the host's own `.env` points at Supabase
+# instead (see DEPLOYMENT.md).
 
 services:
     app:
@@ -13,9 +22,6 @@ services:
         # validated image instead of rebuilding on the deploy host.
 
     web:
-        restart: unless-stopped
-
-    postgres:
         restart: unless-stopped
 
     queue:

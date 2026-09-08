@@ -15,9 +15,16 @@ A deployment (local-dev-shaped or production-shaped) needs four things running:
 1. **The app** (PHP-FPM, `app` service) — serves the Laravel/Inertia application.
    Fronted by **nginx** (`web` service), which proxies PHP requests to `app:9000` over
    FastCGI and serves static assets directly.
-2. **Postgres with the pgvector extension** (`postgres` service, `pgvector/pgvector:pg16`
-   image) — the only supported database. Plain Postgres won't work: migrations create
-   `vector(n)` columns and HNSW indexes that require the extension (see spec 007).
+2. **Postgres with the pgvector extension** — the only supported database. Plain
+   Postgres won't work: migrations create `vector(n)` columns and HNSW indexes that
+   require the extension (see spec 007). Locally/in CI this is the bundled `postgres`
+   service (`pgvector/pgvector:pg16` image). **In production, this project uses an
+   external managed instance (Supabase) instead** — the local `postgres` service is
+   never started in production (see the Manual Deploy Runbook's `--no-deps` flag
+   below); `DB_*` in the host's `.env` points at Supabase directly. Note: Supabase
+   installs the `vector` extension into its own `extensions` schema rather than
+   `public`, which `config/database.php`'s `search_path` (`public,extensions`)
+   already accounts for — no extra setup needed beyond pointing `DB_*` at it.
 3. **A queue worker** (`queue` service, same image as `app`) — processes background
    jobs (currently: book embedding generation, spec 007/008). Nothing in this app is
    synchronous-only; if the queue worker isn't running, embeddings silently never
@@ -62,6 +69,18 @@ on the `app` container only). Changing any of them only ever requires
 own top-of-file comment for why.
 
 ## Database / pgvector Setup
+
+Items 1-4 below describe the bundled `postgres` service, used locally and in CI. **In
+production this project points at an external managed Postgres+pgvector instance
+(Supabase) instead** — the local `postgres` service is never started there (see
+`--no-deps` in the Manual Deploy Runbook). Item 1's requirement (pgvector available)
+still applies; Supabase provides it as an enable-able extension. One thing that does
+carry over regardless of where Postgres runs: some managed providers, Supabase
+included, install the `vector` extension into a dedicated `extensions` schema rather
+than `public` — `config/database.php`'s `search_path` (`public,extensions`) is what
+makes the bare `vector` type/`<=>` operator resolve correctly against that layout; it's
+a harmless no-op against the local image, where the extension already lives in
+`public`.
 
 1. `postgres` runs the `pgvector/pgvector:pg16` image (not plain `postgres`) — this is
    what makes the `vector` extension available at all. Nothing else is
@@ -140,7 +159,8 @@ Host" below — this file is never generated or copied by any deploy tooling).
 ```
 cd /path/to/checkout
 git pull   # or checkout the specific commit/tag to deploy
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+    up -d --build --no-deps app web queue
 ```
 
 What this does:
@@ -149,8 +169,14 @@ What this does:
   `docker-compose.override.yml` is _not_ picked up (it's only auto-loaded when no
   `-f` flags are given), so this never accidentally runs the `dev` build target, bind
   mounts, or the `vite` service in production.
-- `docker-compose.prod.yml` adds `restart: unless-stopped` to every service — a host
-  reboot or a crashed container restarts on its own.
+- `docker-compose.prod.yml` adds `restart: unless-stopped` to `app`/`web`/`queue` — a
+  host reboot or a crashed container restarts on its own.
+- `--no-deps app web queue` names only these three services and skips Compose's
+  default dependency auto-start — without it, Compose would still create/start the
+  local `postgres` service too, purely because `app`/`queue` declare `depends_on:
+postgres` in the base compose file. Production uses external Supabase instead (see
+  "Required Infrastructure" above), so the local `postgres` container is never run
+  on the deploy host at all.
 - `--build` rebuilds the `production` image from the checked-out commit before
   starting. There's no registry yet (see below), so this is the only way to run the
   code currently on disk — the host always builds its own image rather than pulling a
@@ -178,9 +204,10 @@ The `deploy` job in `.github/workflows/tests.yml`:
 - Uses `appleboy/ssh-action` (pinned to a release commit SHA, `v1.2.5`) to SSH into the
   target host and run **exactly the manual runbook above**: `cd $DEPLOY_PATH && git
 fetch/merge --ff-only && docker compose -f docker-compose.yml -f
-docker-compose.prod.yml up -d --build`, then polls `GET /up` (via `docker compose
-exec web wget ... http://localhost/up`, inside the container network — no dependency
-  on knowing the host's external port) for up to ~30 seconds before failing the job.
+docker-compose.prod.yml up -d --build --no-deps app web queue`, then polls `GET /up`
+  (via `docker compose exec web wget ... http://localhost/up`, inside the container
+  network — no dependency on knowing the host's external port) for up to ~30 seconds
+  before failing the job.
 - Required GitHub Secrets (referenced only as `${{ secrets.NAME }}` in the workflow —
   no real values live in this repo):
     - `SSH_HOST` — hostname/IP of the deploy target.
@@ -250,7 +277,8 @@ rebuild from it," the same mechanism as a forward deploy:
 cd $DEPLOY_PATH
 git log --oneline -10        # find the last known-good commit
 git checkout <previous-sha>  # detached HEAD at the previous good commit
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+    up -d --build --no-deps app web queue
 ```
 
 Then confirm with the health checks below. Once satisfied, either stay on the detached
@@ -278,10 +306,13 @@ queue` should show `Up`. There's no HTTP endpoint for queue health — a crashed
   container doesn't surface as an app-facing error, it just means jobs silently stop
   processing, so checking `ps`/`logs` after any deploy is worth doing explicitly, not
   just assuming "app is up" implies "queue is up."
-- **Database**: `docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-postgres` should show `Up (healthy)` — the service's own `pg_isready` healthcheck
-  gates `app`/`queue` startup, so if they came up at all, Postgres was reachable at
-  that point.
+- **Database**: production uses external Supabase, not the local `postgres` service
+  (which isn't even started there — see `--no-deps` above), so there's no local
+  container health check to run. Confirm reachability instead via the app itself:
+  `docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app php
+artisan migrate:status` succeeding (rather than a connection error) confirms `app`
+  can reach Supabase with the credentials in the host's `.env`. `GET /up` passing is
+  also a strong signal, since the app fails to boot fully if the DB is unreachable.
 
 ## Secret Verification (No Secrets Baked Into the Image)
 
@@ -314,9 +345,13 @@ Criteria).
 
 ## Troubleshooting
 
-- **`app`/`queue` won't start, logs show a migration error**: check `DB_*` values in
-  `.env` match `POSTGRES_*` on the `postgres` service, and that `postgres` is actually
-  healthy (`docker compose ps postgres`).
+- **`app`/`queue` won't start, logs show a migration error**: locally, check `DB_*`
+  values in `.env` match `POSTGRES_*` on the `postgres` service, and that `postgres` is
+  actually healthy (`docker compose ps postgres`). In production (external Supabase),
+  the local `postgres` service doesn't exist at all — check instead that `DB_HOST`/
+  `DB_PORT`/`DB_DATABASE`/`DB_USERNAME`/`DB_PASSWORD` in the host's `.env` match
+  Supabase's actual connection details, and that the host can reach Supabase's network
+  (no local `pg_isready` healthcheck to lean on here, since there's no local container).
 - **Editing `.env` doesn't seem to take effect**: config is cached at container start
   by `docker-entrypoint.sh`, not read live while a container keeps running — use
   `docker compose up -d --force-recreate` after any `.env` change. This is the

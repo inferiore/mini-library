@@ -26,7 +26,13 @@ repo as a checklist; fill it in against your own `.env`, don't paste real values
 - `APP_URL` — the real public URL once there's a deploy target.
 - `APP_KEY` — generate a fresh one for that environment via `php artisan key:generate`
   (never reuse the local one).
-- Production `DB_*` credentials for wherever Postgres+pgvector actually runs.
+- Production `DB_*` credentials — **using an external Supabase Postgres+pgvector
+  instance**, not the bundled `postgres` Docker service. No `POSTGRES_DB`/
+  `POSTGRES_USER`/`POSTGRES_PASSWORD` container vars are needed in production (those
+  are local-Docker-only, see above); the production `.env` just points `DB_HOST`/
+  `DB_PORT`/`DB_DATABASE`/`DB_USERNAME`/`DB_PASSWORD` at Supabase directly, and the
+  deploy runbook/CD job start `app web queue` with `--no-deps` so the local `postgres`
+  container is never created on the host (see `DEPLOYMENT.md`).
 - `DEMO_LOGIN_ENABLED` — **must be set to `false`** for any deployment shown to real,
   untrusted users (see spec 002). Defaults to `true` locally/for demos on purpose.
 - `MAIL_*` — only needed if password-reset emails must actually deliver somewhere real
