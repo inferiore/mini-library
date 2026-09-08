@@ -8,7 +8,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\RecommendationController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/login')->name('home');
 
 Route::post('/demo-login/{role}', [DemoLoginController::class, 'store'])
     ->where('role', 'admin|librarian|member')
