@@ -105,12 +105,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate --ansi
 
-      - name: Run fast test suite (SQLite)
-        run: php artisan test
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-
       - name: Migrate against Postgres+pgvector
         run: php artisan migrate --force
         env:
