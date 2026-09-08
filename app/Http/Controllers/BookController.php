@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\BookHasActiveLoansException;
+use App\Http\Requests\SearchBooksRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
+use App\Services\BookSearchService;
 use App\Services\BookService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -14,15 +16,42 @@ use Inertia\Response;
 
 class BookController extends Controller
 {
-    public function __construct(private readonly BookService $books) {}
+    public function __construct(
+        private readonly BookService $books,
+        private readonly BookSearchService $search,
+    ) {}
 
-    public function index(): Response
+    public function index(SearchBooksRequest $request): Response
     {
+        $query = $request->string('query')->trim()->value();
+        $category = $request->string('category')->trim()->value();
+        $publisher = $request->string('publisher')->trim()->value();
+
+        // Delegate to the search service when any search/filter param is
+        // present; otherwise fall back to spec 003's plain paginated listing.
+        $hasSearch = $query !== '' || $category !== '' || $publisher !== '';
+
+        $books = $hasSearch
+            ? $this->search->search($query, $category ?: null, $publisher ?: null)
+            : Book::query()->orderBy('title')->paginate(20)->withQueryString();
+
         return Inertia::render('books/index', [
-            'books' => Book::query()
-                ->orderBy('title')
-                ->paginate(20)
-                ->withQueryString(),
+            'books' => $books,
+            'filters' => [
+                'query' => $query,
+                'category' => $category,
+                'publisher' => $publisher,
+            ],
+            'categories' => Book::query()
+                ->whereNotNull('category')
+                ->distinct()
+                ->orderBy('category')
+                ->pluck('category'),
+            'publishers' => Book::query()
+                ->whereNotNull('publisher')
+                ->distinct()
+                ->orderBy('publisher')
+                ->pluck('publisher'),
         ]);
     }
 

@@ -22,3 +22,9 @@ export type PaginatedBooks = {
     total: number;
     links: { url: string | null; label: string; active: boolean }[];
 };
+
+export type BookFilters = {
+    query: string;
+    category: string;
+    publisher: string;
+};
