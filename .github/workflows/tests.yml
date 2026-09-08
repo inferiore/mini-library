@@ -145,3 +145,93 @@ jobs:
       # cleanly and doesn't push anywhere.
       - name: Build production image
         run: docker build --target production -t mini-library:ci .
+
+  # Re-scoped into spec 010 on 2026-09-08 (see docs/specs/010-deployment.md's
+  # "Re-scoping note") — the spec as originally written deferred this job to a
+  # follow-up spec, but a real deploy target now exists.
+  #
+  # Deliberately does NOT check the repo out or build anything here: the
+  # actual build happens *on the target host* (see the `script:` below), from
+  # the same Dockerfile CI just proved builds cleanly in `docker-build`. There
+  # is still no image registry, so "deploy" means "the host rebuilds the
+  # production image itself from the git commit it just pulled" — see
+  # DEPLOYMENT.md's rollback section for why that shapes the rollback story
+  # too (no registry to just re-point at a prior tag).
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [static-analysis, frontend, backend-tests, docker-build]
+    # Belt-and-suspenders scoping to "real push to this repo's main branch
+    # only": checking github.ref alone isn't enough on a workflow that also
+    # runs on pull_request (a PR's own ref never equals refs/heads/main, but
+    # relying on ref alone is a known footgun elsewhere, so event_name is
+    # checked explicitly too rather than trusted implicitly).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Serializes deploys so two merges landing close together can't race each
+    # other's `git pull` / `docker compose up -d --build` on the same host
+    # directory (same class of concurrent-writer problem docker-entrypoint.sh
+    # already avoids for migrations, one level up the stack).
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      # appleboy/ssh-action, pinned to v1.2.5's release commit. Chosen over
+      # webfactory/ssh-agent because the whole deploy is a single remote
+      # script (no local build/checkout needed in this job — see comment
+      # above), which is exactly what this action is for; webfactory/ssh-agent
+      # instead just loads a key into a local ssh-agent for *other* steps to
+      # use, which this job doesn't need.
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          # Forwarded into the remote script via `envs:` below rather than
+          # interpolated directly into the `script:` string, so the path
+          # value is never spliced into shell text GitHub Actions has to
+          # re-parse — it just arrives as a normal env var over the SSH
+          # session, same as SSH_HOST/SSH_USER/DEPLOY_SSH_KEY never appear in
+          # this file as anything but a `secrets.*` reference.
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: DEPLOY_PATH
+          script: |
+            set -e
+
+            # $DEPLOY_PATH is expected to already be a clean checkout of this
+            # repo on the target host, with its own production `.env` already
+            # in place (never copied over SSH by this job — see
+            # DEPLOYMENT.md's "secrets live on the host" note). --ff-only
+            # deliberately refuses to deploy if the host directory has local
+            # commits/changes CI doesn't know about, rather than silently
+            # discarding them.
+            cd "$DEPLOY_PATH"
+            git fetch origin main
+            git merge --ff-only origin/main
+
+            # No registry: this rebuilds the production image locally on the
+            # host from the commit just pulled. docker-entrypoint.sh handles
+            # config:cache + migrate --force at container start, same as
+            # local dev and the manual runbook in DEPLOYMENT.md — this job
+            # intentionally does nothing migration-related itself.
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+            # Fails the job (and, per this Action, the whole workflow run)
+            # rather than reporting a false success if the app doesn't come
+            # back up healthy — `set -e` above means a non-zero exit from
+            # this loop stops the script here, mid-script, with everything
+            # already logged. There's no automatic rollback on this failure
+            # (see DEPLOYMENT.md's "Not Yet Implemented" section) — a failed
+            # health check here means manual intervention, not a silent
+            # revert.
+            attempt=0
+            until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T web wget -q -O- http://localhost/up > /dev/null; do
+              attempt=$((attempt + 1))
+              if [ "$attempt" -ge 10 ]; then
+                echo "Deploy health check failed: GET /up did not succeed after ${attempt} attempts" >&2
+                exit 1
+              fi
+              sleep 3
+            done
+            echo "Deploy health check passed."

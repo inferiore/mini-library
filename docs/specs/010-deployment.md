@@ -4,6 +4,39 @@ Status: approved
 Area: infra
 Depends on: 001-project-foundation (Docker Compose skeleton, CI shape)
 
+## Re-scoping note (2026-09-08)
+
+This spec originally deferred automated deployment (CD) to a live host until the
+application was feature-complete and a real deploy target existed — see the
+"Objective," `## Functional Requirements` item 2, `needed_variable.md`'s former
+"Deferred" section, and the last bullet of the original "Definition of Done" below,
+which explicitly named a follow-up spec (`011-live-deployment.md`) as the expected
+path.
+
+Per explicit user direction on 2026-09-08 — the application is now feature-complete
+(specs 001–009 implemented) and a real deploy target/credentials process is in place —
+that follow-up was folded into this spec directly instead of being split out. **Only
+this scope decision changed; the rest of this spec's content below is left as
+originally written** (it remains accurate — build+validate CI was already implemented
+under specs 001/002, and everything below still describes it correctly). What's
+different in practice:
+
+- Automated CD **is now implemented**: a `deploy` job in
+  `.github/workflows/tests.yml`, gated to `main`-only pushes and to all prior jobs
+  (`static-analysis`, `frontend`, `backend-tests`, `docker-build`) passing, deploys over
+  SSH using `appleboy/ssh-action` and four new GitHub Secrets (`SSH_HOST`, `SSH_USER`,
+  `DEPLOY_SSH_KEY`, `DEPLOY_PATH`). See `DEPLOYMENT.md`'s "Automated Deployment (CD)"
+  section for exactly what it does and doesn't do — it's intentionally honest about
+  real remaining gaps (no rollback-on-failure, no image registry, no zero-downtime
+  deploy, no DB backup-before-migrate; full list in `DEPLOYMENT.md`'s "Not Yet
+  Implemented" section).
+- Still no image registry — deploy and rollback both work by rebuilding the production
+  image from source on the target host itself, not by pulling a pre-built tag. This
+  remains a real, undone gap (see `DEPLOYMENT.md`), not silently solved by adding CD.
+- `needed_variable.md` has been updated to move the SSH/deploy-path secrets out of its
+  "Deferred" section and list them as required GitHub Secrets for this now-implemented
+  `deploy` job.
+
 ## Objective
 
 Make the application's build-and-validate pipeline production-grade and fully
@@ -41,10 +74,16 @@ deploying later is a documented decision, not a scramble.
    rollback approach (keep the previous image tag, `docker compose ... up -d` back to
    it), and basic health checks (`GET /up`, Laravel's built-in health-check route, plus
    confirming the queue worker container is running).
-4. A section explicitly titled "Not Yet Implemented: Automated Deployment" states what
-   a future spec would need to add automated CD (a target host or platform, a registry,
-   deploy credentials as GitHub Secrets) — so this gap is documented as a decision, not
-   a silent omission.
+4. ~~A section explicitly titled "Not Yet Implemented: Automated Deployment" states
+   what a future spec would need to add automated CD (a target host or platform, a
+   registry, deploy credentials as GitHub Secrets) — so this gap is documented as a
+   decision, not a silent omission.~~ **Superseded by the 2026-09-08 re-scoping**: CD is
+   now implemented (a `deploy` job using SSH + `DEPLOY_PATH`/`DEPLOY_SSH_KEY`/
+   `SSH_HOST`/`SSH_USER` secrets — see `DEPLOYMENT.md`'s "Automated Deployment (CD)"
+   section). `DEPLOYMENT.md` still has a "Not Yet Implemented" section, but it now
+   lists the real remaining gaps in the *implemented* pipeline (no rollback-on-failure,
+   no registry, no zero-downtime deploy, no DB backup-before-migrate, no host
+   provisioning) rather than describing CD itself as unbuilt.
 
 ## Non-Functional Requirements
 
@@ -99,8 +138,13 @@ N/A.
 - `DEPLOYMENT.md` exists and accurately documents required env vars, infra, manual
   deploy steps using the existing Compose files, rollback, and health checks.
 - No secret is baked into the built image (spot-checked).
-- The "Not Yet Implemented" section clearly states automated CD is deferred and what
-  it would require.
+- ~~The "Not Yet Implemented" section clearly states automated CD is deferred and what
+  it would require.~~ **Superseded 2026-09-08**: automated CD is now implemented (see
+  the "Re-scoping note" above); `DEPLOYMENT.md`'s "Not Yet Implemented" section instead
+  honestly lists the real gaps remaining *within* that implemented pipeline (no
+  rollback-on-failure, no registry, no zero-downtime deploy, no DB
+  backup-before-migrate, no host provisioning, no DNS/TLS, no secret-rotation
+  automation).
 
 ## Test Cases
 
@@ -125,3 +169,5 @@ N/A.
 - Revisit and re-scope this spec (or open a follow-up, e.g. `011-live-deployment.md`)
   once the application is otherwise feature-complete and a real deploy target exists,
   per the user's explicit request to review deployment specifics at that point.
+  **Done, in-place, on 2026-09-08** — see the "Re-scoping note" at the top of this
+  spec; folded into this spec directly rather than a separate `011`.

@@ -35,12 +35,35 @@ repo as a checklist; fill it in against your own `.env`, don't paste real values
   `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`.
   Not required — local disk storage works fine for an MVP/demo.
 
-## Deferred (not needed yet — spec 010 is scoped to "build + validate," no live deploy)
+## Needed for automated deployment (spec 010, re-scoped 2026-09-08 — CD now implemented)
 
-- Container registry credentials (e.g. GHCR token) — only needed once `docker-build`
-  in CI starts pushing images somewhere, which isn't in scope until you confirm a real
-  deploy target later.
-- Any deploy-host SSH key / platform API token — same as above.
+These are **GitHub Actions Secrets** (repo Settings → Secrets and variables → Actions),
+not `.env` values — the `deploy` job in `.github/workflows/tests.yml` references them
+only as `${{ secrets.NAME }}`. Nothing below has a value in this repo; supply them in
+GitHub's own secret store, never in a file:
+
+- `SSH_HOST` — hostname or IP of the deploy target host.
+- `SSH_USER` — SSH username on the deploy target.
+- `DEPLOY_SSH_KEY` — private key for SSH auth to the deploy target. Generate a
+  dedicated deploy keypair (don't reuse a personal key); the matching public key must
+  be added to that user's `~/.ssh/authorized_keys` on the target host.
+- `DEPLOY_PATH` — absolute path on the deploy target where this repo is checked out
+  (e.g. `/srv/mini-library`) and where that host's own production `.env` already lives.
+  The deploy job never creates or copies this `.env` — see `DEPLOYMENT.md`'s "Secrets
+  Live on the Host, Not the Pipeline."
+
+Until these four secrets are set, the `deploy` job will run (on a push to `main`, after
+tests/build pass) and fail at the SSH connection step — that's expected and is not a
+sign of a workflow bug; it's simply unconfigured until you supply real values in
+GitHub's secret store.
+
+## Deferred (still genuinely out of scope — see DEPLOYMENT.md's "Not Yet Implemented")
+
+- Container registry credentials (e.g. GHCR token) — deploy/rollback both work today by
+  rebuilding the production image from source on the target host itself; nothing in
+  this pipeline pushes to or pulls from a registry, so no registry credential is
+  needed yet. Adding one later would make rollback an instant tag-switch instead of a
+  rebuild (see `DEPLOYMENT.md`'s "Rollback" section).
 
 ## Nothing needed for
 
