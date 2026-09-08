@@ -201,6 +201,13 @@ jobs:
     name: Deploy to production
     runs-on: ubuntu-latest
     needs: [static-analysis, frontend, backend-tests, docker-build]
+    # Each job gets its own freshly-scoped GITHUB_TOKEN based on its own
+    # `permissions:` block — docker-build's `packages: write` does NOT carry
+    # over here. `packages: read` is the minimum this job needs to `docker
+    # login`/pull the image docker-build just pushed.
+    permissions:
+      contents: read
+      packages: read
     # Belt-and-suspenders scoping to "real push to this repo's main branch
     # only": checking github.ref alone isn't enough on a workflow that also
     # runs on pull_request (a PR's own ref never equals refs/heads/main, but
