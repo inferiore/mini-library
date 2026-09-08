@@ -1,21 +1,60 @@
 # Mini Library
 
 A library management system (Laravel + Inertia/React) for cataloging books, tracking
-checkouts, and searching the collection — with AI-powered, natural-language book
-recommendations grounded in the real catalog (no invented titles).
+checkouts, and searching the collection.
 
-Core features: book catalog management, checkout/check-in with concurrency-safe
-inventory tracking, full-text catalog search, AI recommendations, and an admin view
-into the embedding pipeline that powers them.
+**The centerpiece is AI-powered, natural-language book recommendations** — members
+describe what they want to read in their own words and get real suggestions pulled
+from the actual catalog, each with a plain-English explanation of why it matches.
+Everything else in the app (catalog, roles, checkout, inventory) exists to give that
+feature a real, trustworthy collection to recommend from.
 
 ## AI Recommendations
 
-Instead of only exact keyword search, you can describe what you're looking for in
-plain natural language (e.g. _"I want to read a book for software engineering"_) and
-get relevant picks pulled from the actual catalog, each with a short explanation of why
-it matches.
+Instead of only exact keyword search, a member can describe what they're looking for
+in plain natural language (e.g. _"I want to read a book for software engineering"_)
+and get relevant picks back, each with a short explanation of why it matches.
 
 ![AI Recommendations widget: a natural-language query returns real catalog books with a "Why this matches" explanation and live availability](docs/images/ai-recommendations.png)
+
+**Grounded, not generative** — the AI never invents a book. Every recommendation is
+retrieved from the library's real catalog first (via a vector similarity search over
+each book's title/author/category/description), and only then does the AI explain why
+that specific, real book matches the query. If nothing in the catalog is relevant, the
+member sees "no matches found" rather than a made-up suggestion. Availability shown on
+each recommendation is always the book's live copy count, never a stale value.
+
+Admins have a dedicated view into this pipeline (`/admin/embeddings`) showing every
+book's embedding status, letting them retry a failed one or regenerate it on demand —
+so the recommendation engine's data quality is inspectable, not a black box.
+
+## Roles
+
+Every account has exactly one role, enforced on both the UI and the server (not just
+hidden buttons):
+
+- **Member** — browse/search the catalog, get AI recommendations, check out and
+  return books, view their own loan history.
+- **Librarian** — everything a Member can do, plus manage the book catalog (add/edit/
+  remove books), adjust inventory counts, and view/manage all members' loans
+  (including returning a book on a member's behalf, e.g. at the front desk).
+- **Admin** — everything a Librarian can do, plus the embedding-pipeline admin view
+  (`/admin/embeddings`) that powers AI Recommendations.
+
+## Inventory integrity
+
+Every book tracks `total_copies` and `available_copies`. The system guarantees —
+at both the application layer and, on Postgres, a database-level constraint as a last
+line of defense — that available copies can never go negative or exceed the total,
+even under concurrent activity (e.g. two people trying to check out the last copy at
+the same time, or a librarian adjusting stock while a checkout is in flight). Only one
+such request can ever win; the other gets a clear, honest error instead of corrupting
+the count.
+
+Librarians can add or remove physical copies via a dedicated "Adjust Inventory"
+action. Removing copies is blocked if it would drop availability below the number
+currently on loan — the system tells them exactly how many copies need to come back
+first, rather than allowing an inconsistent state.
 
 ## Local setup
 
