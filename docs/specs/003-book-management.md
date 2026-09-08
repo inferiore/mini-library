@@ -1,6 +1,6 @@
 # 003 — Book Management
 
-Status: approved
+Status: implemented
 Area: backend+frontend
 Depends on: 001-project-foundation, 002-authentication
 
@@ -82,8 +82,11 @@ browse and view book details, so that I can decide what to borrow.
   actual dispatch to a `BookObserver` so the hook exists in one place, not duplicated
   across create/update paths).
 - `App\Observers\BookObserver`: on `created`/`updated` (when embedding-relevant fields
-  changed), no-ops safely if the RAG feature (spec 007) isn't present yet — implemented
-  as a guarded call, not a hard dependency that breaks 003 if run standalone.
+  changed), dispatches `App\Events\BookNeedsReembedding` — an event, not a direct call
+  into a spec-007 service class, so 003 never references a class that doesn't exist
+  yet (an event with zero listeners is a harmless no-op; PHPStan would otherwise
+  correctly flag a direct reference to an as-yet-nonexistent `RagDocumentService`).
+  Spec 007 registers a listener for this event rather than modifying `BookObserver`.
 - `BookController` (resource controller): `index`, `show`, `create`, `store`, `edit`,
   `update`, `destroy` — thin, delegates to `BookService`.
 - `database/factories/BookFactory.php` — Faker-backed, varied categories (fiction,
@@ -165,8 +168,13 @@ browse and view book details, so that I can decide what to borrow.
 2. Feature test: MEMBER attempting create/update/delete gets 403.
 3. Feature test: update request including `available_copies` in the payload is ignored
    (DB value unchanged by that field).
-4. Feature test: deleting a book with an active loan fails with a clear error; deleting
-   one with no active loans soft-deletes it.
+4. Feature test: deleting a book with no active loans soft-deletes it.
+   `BookService::delete()`'s active-loan guard is implemented now (queries
+   `loans` via the raw query builder, guarded by `Schema::hasTable('loans')`
+   since that table doesn't exist until spec 005), but the "blocked by an
+   active loan" half of this test case can't be automated until spec 005
+   provides a `Loan` factory to create one — deferred there, not silently
+   dropped.
 5. Feature test: invalid `published_year` / oversized `description` / non-image cover
    are rejected with validation errors.
 6. Feature test: book index/show pages return 200 for MEMBER, LIBRARIAN, and ADMIN.

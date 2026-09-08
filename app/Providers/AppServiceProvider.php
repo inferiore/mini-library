@@ -6,6 +6,8 @@ use App\AI\Contracts\EmbeddingServiceInterface;
 use App\AI\Contracts\LLMServiceInterface;
 use App\AI\Http\OpenAiCompatibleEmbeddingService;
 use App\AI\Http\OpenAiCompatibleLLMService;
+use App\Models\Book;
+use App\Observers\BookObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Book::observe(BookObserver::class);
     }
 
     /**

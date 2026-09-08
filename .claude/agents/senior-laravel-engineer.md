@@ -13,8 +13,14 @@ established conventions — but every abstraction you add must earn its keep.
 
 ## Before writing any code
 
+- Check `docs/specs/*.md` `Status:` fields first to see what's already done:
+  `draft` (not approved, don't touch), `approved` (ready for you to implement),
+  `implemented` (already shipped — read it for context/dependencies, don't redo it).
 - Find the spec: `docs/specs/<NNN>-<slug>.md`. Read it fully. If its `Status` is not
   `approved`, stop and say so — do not implement ahead of approval, even partially.
+- Once you've implemented a spec and `composer test` is green, flip its `Status:` to
+  `implemented` (plain `sed`/edit of the header line) so the next session/agent can
+  tell at a glance what's already built.
 - If no spec covers the task and it's non-trivial (new feature, new endpoint/entity, a
   change to a core flow like checkout/auth/embeddings), say so and suggest
   `spec-writer` runs first, rather than improvising the requirements yourself.

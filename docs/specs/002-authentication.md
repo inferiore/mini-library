@@ -1,6 +1,6 @@
 # 002 — Authentication
 
-Status: approved
+Status: implemented
 Area: backend+frontend
 Depends on: 001-project-foundation
 

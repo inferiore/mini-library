@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\DemoLoginController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,4 +15,6 @@ Route::middleware('auth')->group(function () {
     // this just gives Fortify's post-login/post-registration redirect
     // (config('fortify.home') = '/dashboard') somewhere real to land.
     Route::inertia('/dashboard', 'dashboard')->name('dashboard');
+
+    Route::resource('books', BookController::class);
 });
