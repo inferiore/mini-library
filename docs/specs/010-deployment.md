@@ -34,7 +34,7 @@ deploying later is a documented decision, not a scramble.
 3. `DEPLOYMENT.md` documents: required infrastructure (what services must exist:
    Postgres+pgvector, a queue worker process, the app itself), the full list of
    required environment variables with their purpose (never example real values),
-   required GitHub Secrets *for when CD is added later*, DB/pgvector setup steps,
+   required GitHub Secrets _for when CD is added later_, DB/pgvector setup steps,
    queue worker operation, the build process, a **manual** deploy runbook (how someone
    would deploy today, by hand, using the production Docker Compose files from spec 001
    — `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`), a

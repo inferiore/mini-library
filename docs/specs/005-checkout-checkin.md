@@ -78,32 +78,32 @@ manage the collection.
 ## API/Application Changes
 
 - `App\Services\LoanService::checkout(Book $book, User $user): Loan`:
-  ```php
-  DB::transaction(function () use ($book, $user) {
-      if (Loan::where('book_id', $book->id)->where('user_id', $user->id)
-              ->whereNull('returned_at')->exists()) {
-          throw new AlreadyBorrowedException();
-      }
-      $affected = DB::table('books')->where('id', $book->id)
-          ->where('available_copies', '>', 0)->decrement('available_copies');
-      if ($affected === 0) throw new BookUnavailableException();
-      return Loan::create([
-          'book_id' => $book->id, 'user_id' => $user->id,
-          'checked_out_at' => now(),
-          'due_at' => now()->addDays(config('library.loan_period_days')),
-      ]);
-  });
-  ```
+    ```php
+    DB::transaction(function () use ($book, $user) {
+        if (Loan::where('book_id', $book->id)->where('user_id', $user->id)
+                ->whereNull('returned_at')->exists()) {
+            throw new AlreadyBorrowedException();
+        }
+        $affected = DB::table('books')->where('id', $book->id)
+            ->where('available_copies', '>', 0)->decrement('available_copies');
+        if ($affected === 0) throw new BookUnavailableException();
+        return Loan::create([
+            'book_id' => $book->id, 'user_id' => $user->id,
+            'checked_out_at' => now(),
+            'due_at' => now()->addDays(config('library.loan_period_days')),
+        ]);
+    });
+    ```
 - `App\Services\LoanService::return(Loan $loan): Loan`:
-  ```php
-  DB::transaction(function () use ($loan) {
-      if ($loan->returned_at !== null) throw new LoanAlreadyReturnedException();
-      $loan->update(['returned_at' => now()]);
-      DB::table('books')->where('id', $loan->book_id)
-          ->where('available_copies', '<', DB::raw('total_copies'))
-          ->increment('available_copies');
-  });
-  ```
+    ```php
+    DB::transaction(function () use ($loan) {
+        if ($loan->returned_at !== null) throw new LoanAlreadyReturnedException();
+        $loan->update(['returned_at' => now()]);
+        DB::table('books')->where('id', $loan->book_id)
+            ->where('available_copies', '<', DB::raw('total_copies'))
+            ->increment('available_copies');
+    });
+    ```
 - `Loan` model: `scopeActive()` (`whereNull('returned_at')`), `scopeOverdue()`
   (`active()->where('due_at', '<', now())`), `isOverdue(): bool` accessor.
 - `LoanPolicy`: `create` (checkout) → `MEMBER` only (librarians/admins manage the

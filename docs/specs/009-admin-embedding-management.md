@@ -101,7 +101,7 @@ UI/controller layer over existing columns (`status`, `attempts`, `error_message`
 
 ## Edge Cases
 
-- Retrying a document that a background job is *currently* processing (status already
+- Retrying a document that a background job is _currently_ processing (status already
   flipped to `processing` by the time the admin's request lands) should not create a
   duplicate in-flight job — check current status inside the same operation that
   dispatches, and reject/no-op if already `processing`.

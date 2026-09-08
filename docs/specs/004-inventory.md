@@ -29,7 +29,7 @@ inconsistent available count.
 3. Increasing `total_copies` by N increases `available_copies` by N (new copies are
    available immediately).
 4. Decreasing `total_copies` by N is only allowed if at least N copies are currently
-   *available* (i.e. you can't retire a copy that's out on loan) — decreasing
+   _available_ (i.e. you can't retire a copy that's out on loan) — decreasing
    `available_copies` by N in that case. Attempting to decrease below the number of
    copies currently on loan is rejected with a clear error explaining how many copies
    would need to be returned first.
@@ -63,13 +63,13 @@ inconsistent available count.
 
 - `App\Services\InventoryService::adjustTotalCopies(Book $book, int $newTotal): Book` —
   the single choke point for changing `total_copies`. Computes the delta, and:
-  - delta > 0: atomically `total_copies += delta; available_copies += delta`.
-  - delta < 0: atomically checks `available_copies >= abs(delta)` and, if so,
-    `total_copies += delta; available_copies += delta`; otherwise throws
-    `InsufficientAvailableCopiesException` carrying how many are currently on loan.
-  - All of the above via a single guarded `UPDATE ... WHERE` (not a read-then-write),
-    the same atomic pattern spec 005 uses for checkout, so two concurrent adjustments
-    (or an adjustment racing a checkout) can't corrupt the invariant.
+    - delta > 0: atomically `total_copies += delta; available_copies += delta`.
+    - delta < 0: atomically checks `available_copies >= abs(delta)` and, if so,
+      `total_copies += delta; available_copies += delta`; otherwise throws
+      `InsufficientAvailableCopiesException` carrying how many are currently on loan.
+    - All of the above via a single guarded `UPDATE ... WHERE` (not a read-then-write),
+      the same atomic pattern spec 005 uses for checkout, so two concurrent adjustments
+      (or an adjustment racing a checkout) can't corrupt the invariant.
 - `App\Http\Requests\AdjustInventoryRequest` — validates the new `total_copies` value.
 - `InventoryController@update` (or a method on `BookController`) — thin, delegates to
   `InventoryService`, catches `InsufficientAvailableCopiesException` and returns a
@@ -97,7 +97,7 @@ inconsistent available count.
 ## Edge Cases
 
 - Decreasing `total_copies` to exactly the number currently on loan (i.e. resulting
-  `available_copies = 0`) is allowed — it's only "reduce *below* the on-loan count"
+  `available_copies = 0`) is allowed — it's only "reduce _below_ the on-loan count"
   that's rejected, not "reduce to zero available."
 - Two concurrent adjustment requests on the same book (e.g. two librarians) must not
   both succeed in a way that violates the invariant — the atomic guarded UPDATE handles
@@ -115,7 +115,7 @@ inconsistent available count.
 - Decreasing `total_copies` below the on-loan count is rejected with a specific,
   actionable error (not a generic failure).
 - No code path can ever produce `available_copies < 0` or `available_copies >
-  total_copies` — proven by both application tests and a raw-SQL CHECK-constraint test.
+total_copies` — proven by both application tests and a raw-SQL CHECK-constraint test.
 - Concurrent adjustment requests don't corrupt the invariant (tested via
   parallel/rapid-sequential simulated requests).
 

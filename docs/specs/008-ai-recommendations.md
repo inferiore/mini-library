@@ -26,7 +26,7 @@ discover books I wouldn't have found by browsing or exact-match search alone.
    (default 5) most similar `completed` `rag_documents` via
    `VectorSearchService::search()` from spec 007.
 3. The retrieved documents' content (and their books' availability) are passed to the
-   LLM as the *only* source of book information in the prompt — the prompt explicitly
+   LLM as the _only_ source of book information in the prompt — the prompt explicitly
    instructs the model to recommend only from the provided context and never invent a
    title/author not present in it.
 4. The response returned to the user, per recommended book: title, author, a short
@@ -76,7 +76,7 @@ against that data (no new tables).
 
 - `App\Http\Requests\RecommendationRequest` — validates the free-text `query`.
 - `App\Services\RecommendationService::recommend(string $query, int $limit =
-  5): array` — orchestrates: embed query → `VectorSearchService::search()` → build a
+5): array` — orchestrates: embed query → `VectorSearchService::search()` → build a
   grounded prompt from the retrieved documents → `LLMServiceInterface::generate()` →
   parse the model's structured response (should request the LLM to return
   strictly-formatted output, e.g. JSON, so parsing doesn't rely on fragile text

@@ -43,7 +43,7 @@ assumptions.
    throwaway smoke test, which is then deleted once spec 007/008 use it for real.
 8. GitHub Actions runs on every PR: `static-analysis` (pint + phpstan), `frontend`
    (`npm run check`, `types:check`, `build`), `backend-tests` (PHPUnit against the fast
-   SQLite suite *and* against a Postgres+pgvector service container via
+   SQLite suite _and_ against a Postgres+pgvector service container via
    `phpunit.ci.xml`), `docker-build` (builds the `production` Dockerfile target).
 
 ## Non-Functional Requirements

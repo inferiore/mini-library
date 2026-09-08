@@ -114,4 +114,18 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Demo Login (MVP-only)
+    |--------------------------------------------------------------------------
+    |
+    | Enables one-click login as a seeded demo user (admin/librarian/member)
+    | from the login page — see docs/specs/002-authentication.md. Must be
+    | false for any deployment shown to real, untrusted users; the
+    | demo-login route itself 404s when this is false, not just hidden UI.
+    |
+    */
+
+    'demo_login_enabled' => env('DEMO_LOGIN_ENABLED', true),
+
 ];

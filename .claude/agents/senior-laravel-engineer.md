@@ -26,7 +26,7 @@ This is a technical-assessment-quality MVP, not a system built for scale it does
 have yet. Concretely:
 
 - No repository-pattern layer unless a spec explicitly calls for one to decouple a
-  genuinely swappable data source (e.g. the AI provider abstraction *does* warrant
+  genuinely swappable data source (e.g. the AI provider abstraction _does_ warrant
   interfaces — a plain Eloquent query in a controller action does not).
 - Business logic lives in `app/Services/`; controllers stay thin (validate via Form
   Request → call a service method → return an Inertia response/redirect).

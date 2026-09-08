@@ -66,7 +66,7 @@ elevated roles.
 
 - No SSO client ID/secret is configured or hardcoded in this spec — Socialite isn't
   installed yet, only the seam for it is left clean (a `SocialAccount`-shaped
-  extension point is *not* built prematurely; this spec just avoids doing anything that
+  extension point is _not_ built prematurely; this spec just avoids doing anything that
   would need undoing later, e.g. don't assume email+password is the only possible
   identity source when writing the registration→role-assignment logic).
 - Passwords are hashed via Laravel's default bcrypt; `BCRYPT_ROUNDS` stays
