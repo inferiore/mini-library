@@ -33,6 +33,11 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         Book::observe(BookObserver::class);
+
+        // Spec 007's SyncBookRagDocument listener (which rebuilds a book's RAG
+        // document and dispatches the embedding job on BookNeedsReembedding) is
+        // wired via Laravel's automatic listener discovery — its handle()
+        // type-hints the event — so no explicit registration is needed here.
     }
 
     /**

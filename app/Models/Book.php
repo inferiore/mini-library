@@ -6,6 +6,7 @@ use Database\Factories\BookFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -67,5 +68,16 @@ class Book extends Model
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class);
+    }
+
+    /**
+     * The book's RAG document(s) for embedding/retrieval (spec 007). Today the
+     * cardinality is 1:1, but the pivot keeps room for more per book later.
+     *
+     * @return BelongsToMany<RagDocument, $this>
+     */
+    public function ragDocuments(): BelongsToMany
+    {
+        return $this->belongsToMany(RagDocument::class);
     }
 }
