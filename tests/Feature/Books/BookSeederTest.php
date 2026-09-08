@@ -11,13 +11,15 @@ class BookSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_populates_a_catalog_spanning_categories_and_availability_states(): void
+    public function test_it_populates_a_catalog_spanning_multiple_categories(): void
     {
         $this->seed(BookSeeder::class);
 
-        $this->assertTrue(Book::query()->count() >= 30);
+        // Real, internet-sourced titles (database/data/real_books.json) —
+        // not factory-generated fake data. Availability states aren't baked
+        // into the seed; they come from real checkouts (spec 005) instead.
+        $this->assertTrue(Book::query()->count() >= 15);
         $this->assertTrue(Book::query()->distinct()->count('category') > 1);
-        $this->assertTrue(Book::query()->where('available_copies', 0)->exists());
         $this->assertTrue(
             Book::query()->whereColumn('available_copies', '=', 'total_copies')->exists()
         );

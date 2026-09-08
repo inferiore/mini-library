@@ -26,6 +26,7 @@ class OpenAiCompatibleEmbeddingService implements EmbeddingServiceInterface
             ->post('/embeddings', [
                 'model' => config('ai.embedding_model'),
                 'input' => $texts,
+                'dimensions' => config('ai.embedding.dimensions'),
             ])
             ->throw()
             ->json();

@@ -4,13 +4,15 @@ namespace Database\Seeders;
 
 use App\Models\Book;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class BookSeeder extends Seeder
 {
     /**
-     * Populate a demo catalog spanning categories and availability states,
-     * so search (006), recommendations (008), and checkout (005) are
-     * demonstrable without manual data entry. Safe to re-run.
+     * Populate the catalog from a real, internet-sourced book list (title/
+     * author/isbn/description/published_year/category/publisher — see
+     * database/data/real_books.json and the `books:import` command) rather
+     * than factory-generated fake data. Safe to re-run.
      */
     public function run(): void
     {
@@ -18,8 +20,10 @@ class BookSeeder extends Seeder
             return;
         }
 
-        Book::factory()->count(20)->create();
-        Book::factory()->count(15)->partiallyBorrowed()->create();
-        Book::factory()->count(5)->fullyBorrowed()->create();
+        Artisan::call('books:import', [
+            'path' => database_path('data/real_books.json'),
+        ]);
+
+        $this->command->info(trim(Artisan::output()));
     }
 }
