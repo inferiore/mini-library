@@ -33,6 +33,16 @@ class BookPolicy
         return $this->isCatalogManager($user);
     }
 
+    /**
+     * Adjust total_copies (spec 004). Same audience as update today, but named
+     * distinctly so a future spec can split the permission without touching the
+     * general edit path.
+     */
+    public function adjustInventory(User $user, Book $book): bool
+    {
+        return $this->isCatalogManager($user);
+    }
+
     private function isCatalogManager(User $user): bool
     {
         return in_array($user->role, [UserRole::Admin, UserRole::Librarian], true);

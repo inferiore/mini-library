@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/layouts/authenticated-layout';
 import type { Book } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import type { FormEventHandler } from 'react';
 
 export default function BookShow({ book }: { book: Book }) {
     const { auth, flash } = usePage().props;
@@ -103,6 +104,65 @@ export default function BookShow({ book }: { book: Book }) {
                     {book.description}
                 </p>
             )}
+
+            {canManage && <AdjustInventory book={book} />}
         </AuthenticatedLayout>
+    );
+}
+
+function AdjustInventory({ book }: { book: Book }) {
+    const { data, setData, put, processing, errors } = useForm({
+        total_copies: book.total_copies,
+    });
+
+    const onLoan = book.total_copies - book.available_copies;
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        put(`/books/${book.id}/inventory`, { preserveScroll: true });
+    };
+
+    return (
+        <section className="mt-10 max-w-md rounded-sm border border-[#e3e3e0] p-4 dark:border-[#3E3E3A]">
+            <h2 className="text-sm font-medium">Adjust Inventory</h2>
+            <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                {book.total_copies} total &middot; {book.available_copies}{' '}
+                available &middot; {onLoan} on loan
+            </p>
+
+            <form onSubmit={submit} className="mt-4 space-y-3">
+                <div>
+                    <label
+                        htmlFor="total_copies"
+                        className="mb-1 block text-sm font-medium"
+                    >
+                        New total copies
+                    </label>
+                    <input
+                        id="total_copies"
+                        type="number"
+                        min={0}
+                        value={data.total_copies}
+                        onChange={(e) =>
+                            setData('total_copies', Number(e.target.value))
+                        }
+                        className="mt-1 w-full rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-2 text-sm dark:border-[#3E3E3A]"
+                    />
+                    {errors.total_copies && (
+                        <p className="mt-1 text-sm text-red-600">
+                            {errors.total_copies}
+                        </p>
+                    )}
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="rounded-sm bg-[#1b1b18] px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50 dark:bg-[#eeeeec] dark:text-[#1C1C1A]"
+                >
+                    Update Inventory
+                </button>
+            </form>
+        </section>
     );
 }
