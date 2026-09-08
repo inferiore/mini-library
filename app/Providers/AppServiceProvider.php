@@ -9,8 +9,12 @@ use App\AI\Http\OpenAiCompatibleLLMService;
 use App\Models\Book;
 use App\Observers\BookObserver;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -31,6 +35,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // The recommendation endpoint is LLM-backed with real per-call cost, so
+        // it's throttled per user (falling back to IP for safety) — a
+        // conservative default unlike the rest of the app's routes (spec 008).
+        RateLimiter::for('recommendations', fn (Request $request) => Limit::perMinute(10)
+            ->by((string) $request->user()->id)
+            ->response(fn (): JsonResponse => response()->json([
+                'message' => 'Too many recommendation requests. Please wait a moment and try again.',
+            ], 429)));
 
         Book::observe(BookObserver::class);
 
